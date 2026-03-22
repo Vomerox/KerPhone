@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:KerPhoneAndroid"
+             x:Class="KerPhoneAndroid.App">
+    <Application.Resources>
+        <ResourceDictionary>
+
+            <!-- Convertisseurs -->
+            <local:StringToBoolConverter x:Key="StringToBoolConverter" />
+            <local:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <local:MuteTextConverter x:Key="MuteTextConverter" />
+            <local:HoldTextConverter x:Key="HoldTextConverter" />
+
+            <!-- Couleurs du theme sombre KerPhone -->
+            <Color x:Key="BgDark">#0B1426</Color>
+            <Color x:Key="BgMedium">#111D35</Color>
+            <Color x:Key="BgLight">#1A2744</Color>
+            <Color x:Key="BgCard">#162040</Color>
+            <Color x:Key="AccentGold">#D4A520</Color>
+            <Color x:Key="AccentBlue">#3B82F6</Color>
+            <Color x:Key="TextPrimary">#FFFFFF</Color>
+            <Color x:Key="TextSecondary">#A0AEC0</Color>
+            <Color x:Key="TextMuted">#6B7280</Color>
+            <Color x:Key="DangerRed">#EF4444</Color>
+            <Color x:Key="SuccessGreen">#22C55E</Color>
+            <Color x:Key="WarningOrange">#FFA500</Color>
+            <Color x:Key="BorderColor">#2A3A5C</Color>
+
+            <!-- Styles globaux -->
+            <Style TargetType="Page" ApplyToDerivedTypes="True">
+                <Setter Property="BackgroundColor" Value="{StaticResource BgDark}" />
+            </Style>
+
+            <Style TargetType="Label">
+                <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+                <Setter Property="FontFamily" Value="OpenSansRegular" />
+            </Style>
+
+            <Style TargetType="Entry">
+                <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+                <Setter Property="PlaceholderColor" Value="{StaticResource TextMuted}" />
+                <Setter Property="BackgroundColor" Value="{StaticResource BgLight}" />
+                <Setter Property="FontFamily" Value="OpenSansRegular" />
+            </Style>
+
+            <Style x:Key="GoldButton" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="{StaticResource AccentGold}" />
+                <Setter Property="TextColor" Value="{StaticResource BgDark}" />
+                <Setter Property="FontFamily" Value="OpenSansSemibold" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="HeightRequest" Value="48" />
+                <Setter Property="FontSize" Value="16" />
+            </Style>
+
+            <Style x:Key="BlueButton" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="{StaticResource AccentBlue}" />
+                <Setter Property="TextColor" Value="#FFFFFF" />
+                <Setter Property="FontFamily" Value="OpenSansSemibold" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="HeightRequest" Value="48" />
+                <Setter Property="FontSize" Value="16" />
+            </Style>
+
+            <Style x:Key="DangerButton" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="{StaticResource DangerRed}" />
+                <Setter Property="TextColor" Value="#FFFFFF" />
+                <Setter Property="FontFamily" Value="OpenSansSemibold" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="HeightRequest" Value="48" />
+                <Setter Property="FontSize" Value="16" />
+            </Style>
+
+            <Style x:Key="DialButton" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="{StaticResource BgLight}" />
+                <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+                <Setter Property="FontFamily" Value="OpenSansSemibold" />
+                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="FontSize" Value="22" />
+                <Setter Property="HeightRequest" Value="64" />
+                <Setter Property="WidthRequest" Value="80" />
+            </Style>
+
+            <Style x:Key="CallActionButton" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="{StaticResource BgLight}" />
+                <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+                <Setter Property="FontFamily" Value="OpenSansSemibold" />
+                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="HeightRequest" Value="56" />
+                <Setter Property="MinimumWidthRequest" Value="90" />
+            </Style>
+
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

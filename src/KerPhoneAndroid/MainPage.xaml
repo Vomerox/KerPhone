@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:KerPhoneAndroid.ViewModels"
+             x:Class="KerPhoneAndroid.MainPage"
+             x:DataType="vm:MainViewModel"
+             BackgroundColor="{StaticResource BgDark}">
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="0">
+
+        <!-- ═══════════════ EN-TETE ═══════════════ -->
+        <Grid Grid.Row="0" BackgroundColor="{StaticResource BgMedium}"
+              Padding="16,12" ColumnDefinitions="Auto,*,Auto">
+
+            <!-- Logo -->
+            <Image Grid.Column="0" Source="kerphone_logo.png"
+                   HeightRequest="32" WidthRequest="32"
+                   VerticalOptions="Center" />
+
+            <!-- Titre + statut -->
+            <VerticalStackLayout Grid.Column="1" Margin="12,0,0,0" VerticalOptions="Center">
+                <Label Text="KerPhone" FontSize="18" FontFamily="OpenSansSemibold"
+                       TextColor="{StaticResource AccentGold}" />
+                <Label Text="{Binding RegistrationStatus}" FontSize="12"
+                       TextColor="{Binding RegistrationColor}" />
+            </VerticalStackLayout>
+
+            <!-- Bouton deconnecter -->
+            <Button Grid.Column="2" Text="Deconnecter"
+                    IsVisible="{Binding IsRegistered}"
+                    Command="{Binding DisconnectCommand}"
+                    BackgroundColor="Transparent"
+                    TextColor="{StaticResource DangerRed}"
+                    FontSize="13" FontFamily="OpenSansSemibold"
+                    VerticalOptions="Center" />
+        </Grid>
+
+        <!-- ═══════════════ CONTENU PRINCIPAL ═══════════════ -->
+        <ScrollView Grid.Row="1" Padding="16,8">
+            <VerticalStackLayout Spacing="12">
+
+                <!-- Message de statut -->
+                <Label Text="{Binding StatusMessage}" FontSize="12"
+                       TextColor="{StaticResource TextSecondary}"
+                       IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}"
+                       HorizontalTextAlignment="Center" Margin="0,4" />
+
+                <!-- ══════ PANNEAU CONNEXION ══════ -->
+                <Frame IsVisible="{Binding ShowLoginPanel}"
+                       BackgroundColor="{StaticResource BgCard}"
+                       BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="12" Padding="20" HasShadow="False">
+                    <VerticalStackLayout Spacing="14">
+
+                        <Label Text="Connexion SIP" FontSize="20"
+                               FontFamily="OpenSansSemibold"
+                               TextColor="{StaticResource AccentGold}"
+                               HorizontalTextAlignment="Center" />
+
+                        <!-- Serveur -->
+                        <Label Text="Serveur SIP" FontSize="13"
+                               TextColor="{StaticResource TextSecondary}" />
+                        <Entry Placeholder="sip.exemple.fr"
+                               Text="{Binding SipServer}"
+                               Keyboard="Url"
+                               ReturnType="Next" />
+
+                        <!-- Port -->
+                        <Label Text="Port" FontSize="13"
+                               TextColor="{StaticResource TextSecondary}" />
+                        <Entry Placeholder="5060"
+                               Text="{Binding SipPort}"
+                               Keyboard="Numeric"
+                               ReturnType="Next" />
+
+                        <!-- Identifiant -->
+                        <Label Text="Identifiant" FontSize="13"
+                               TextColor="{StaticResource TextSecondary}" />
+                        <Entry Placeholder="utilisateur"
+                               Text="{Binding SipUser}"
+                               Keyboard="Plain"
+                               ReturnType="Next" />
+
+                        <!-- Mot de passe -->
+                        <Label Text="Mot de passe" FontSize="13"
+                               TextColor="{StaticResource TextSecondary}" />
+                        <Entry Placeholder="mot de passe"
+                               Text="{Binding SipPassword}"
+                               IsPassword="True"
+                               ReturnType="Go"
+                               x:Name="PasswordEntry" />
+
+                        <!-- Bouton connexion -->
+                        <Button Text="Se connecter"
+                                Style="{StaticResource GoldButton}"
+                                Command="{Binding ConnectCommand}"
+                                IsEnabled="{Binding IsConnecting, Converter={StaticResource InvertedBoolConverter}}"
+                                Margin="0,8,0,0" />
+
+                        <!-- Indicateur de chargement -->
+                        <ActivityIndicator IsRunning="{Binding IsConnecting}"
+                                           IsVisible="{Binding IsConnecting}"
+                                           Color="{StaticResource AccentGold}"
+                                           HorizontalOptions="Center" />
+
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- ══════ APPEL ENTRANT ══════ -->
+                <Frame IsVisible="{Binding ShowIncomingCall}"
+                       BackgroundColor="{StaticResource BgCard}"
+                       BorderColor="{StaticResource AccentBlue}"
+                       CornerRadius="12" Padding="20" HasShadow="False">
+                    <VerticalStackLayout Spacing="14" HorizontalOptions="Center">
+
+                        <Label Text="Appel entrant" FontSize="20"
+                               FontFamily="OpenSansSemibold"
+                               TextColor="{StaticResource AccentBlue}"
+                               HorizontalTextAlignment="Center" />
+
+                        <Label Text="{Binding IncomingCallerInfo}" FontSize="24"
+                               FontFamily="OpenSansSemibold"
+                               HorizontalTextAlignment="Center" />
+
+                        <HorizontalStackLayout Spacing="16" HorizontalOptions="Center">
+                            <Button Text="Repondre"
+                                    Style="{StaticResource BlueButton}"
+                                    Command="{Binding AnswerIncomingCommand}"
+                                    WidthRequest="130" />
+                            <Button Text="Refuser"
+                                    Style="{StaticResource DangerButton}"
+                                    Command="{Binding RejectIncomingCommand}"
+                                    WidthRequest="130" />
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- ══════ APPEL EN COURS ══════ -->
+                <Frame IsVisible="{Binding ShowActiveCall}"
+                       BackgroundColor="{StaticResource BgCard}"
+                       BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="12" Padding="20" HasShadow="False">
+                    <VerticalStackLayout Spacing="12" HorizontalOptions="Center">
+
+                        <Label Text="{Binding CallStatus}" FontSize="14"
+                               TextColor="{StaticResource TextSecondary}"
+                               HorizontalTextAlignment="Center" />
+
+                        <Label Text="{Binding RemoteParty}" FontSize="26"
+                               FontFamily="OpenSansSemibold"
+                               HorizontalTextAlignment="Center" />
+
+                        <Label Text="{Binding CallDuration}" FontSize="36"
+                               FontFamily="OpenSansSemibold"
+                               TextColor="{StaticResource AccentGold}"
+                               HorizontalTextAlignment="Center" />
+
+                        <!-- Boutons d'action -->
+                        <HorizontalStackLayout Spacing="12" HorizontalOptions="Center"
+                                               Margin="0,8,0,0">
+                            <Button Text="{Binding IsMuted, Converter={StaticResource MuteTextConverter}}"
+                                    Style="{StaticResource CallActionButton}"
+                                    Command="{Binding ToggleMuteCommand}" />
+                            <Button Text="{Binding IsOnHold, Converter={StaticResource HoldTextConverter}}"
+                                    Style="{StaticResource CallActionButton}"
+                                    Command="{Binding ToggleHoldCommand}" />
+                        </HorizontalStackLayout>
+
+                        <Button Text="Raccrocher"
+                                Style="{StaticResource DangerButton}"
+                                Command="{Binding HangupCommand}"
+                                Margin="0,8,0,0" />
+
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- ══════ PAVE NUMERIQUE ══════ -->
+                <Frame IsVisible="{Binding ShowDialPad}"
+                       BackgroundColor="{StaticResource BgCard}"
+                       BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="12" Padding="16" HasShadow="False">
+                    <VerticalStackLayout Spacing="10">
+
+                        <!-- Champ numero -->
+                        <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,4">
+                            <Entry Grid.Column="0"
+                                   Text="{Binding DialNumber}"
+                                   Placeholder="Numero a appeler"
+                                   FontSize="22" FontFamily="OpenSansSemibold"
+                                   Keyboard="Telephone"
+                                   ReturnType="Go"
+                                   x:Name="DialEntry" />
+                            <Button Grid.Column="1" Text="X"
+                                    Command="{Binding ClearNumberCommand}"
+                                    BackgroundColor="Transparent"
+                                    TextColor="{StaticResource TextMuted}"
+                                    FontSize="16" WidthRequest="44" />
+                            <Button Grid.Column="2" Text="&#x232B;"
+                                    Command="{Binding BackspaceCommand}"
+                                    BackgroundColor="Transparent"
+                                    TextColor="{StaticResource TextSecondary}"
+                                    FontSize="20" WidthRequest="44" />
+                        </Grid>
+
+                        <!-- Pave numerique 3x4 -->
+                        <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto,Auto,Auto"
+                              ColumnSpacing="8" RowSpacing="8"
+                              HorizontalOptions="Center">
+                            <Button Grid.Row="0" Grid.Column="0" Text="1" Style="{StaticResource DialButton}" Command="{Binding DialPadPressCommand}" CommandParameter="1" />
+                            <Button Grid.Row="0" Grid.Column="1" Text="2" Style="{StaticResource DialButton}" Command="{Binding DialPadPressCommand}" CommandParameter="2" />
+                            <Button Grid.Row="0" Grid.Column="2" Text="3" Style="{StaticResource DialButton}" Command="{Binding DialPadPressCommand}" CommandParameter="3" />
+
+                            <Button Grid.Row="1" Grid.Column="0" Text="4" Style="{StaticResource DialButton}" Command="{Binding DialPadPressCommand}" CommandParameter="4" />
+                            <Button Grid.Row="1" Grid.Column="1" Text="5" Style="{StaticResource DialButton}" Command="{Binding DialPadPressCommand}" CommandParameter="5" />
+                            <Button Grid.Row="1" Grid.Column="2" Text="6" Style="{StaticResource DialButton}" Command="{Binding DialPadPressCommand}" CommandParameter="6" />
+
+                            <Button Grid.Row="2" Grid.Column="0" Text="7" Style="{StaticResource DialButton}" Command="{Binding DialPadPressCommand}" CommandParameter="7" />
+                            <Button Grid.Row="2" Grid.Column="1" Text="8" Style="{StaticResource DialButton}" Command="{Binding DialPadPressCommand}" CommandParameter="8" />
+                            <Button Grid.Row="2" Grid.Column="2" Text="9" Style="{StaticResource DialButton}" Command="{Binding DialPadPressCommand}" CommandParameter="9" />
+
+                            <Button Grid.Row="3" Grid.Column="0" Text="*" Style="{StaticResource DialButton}" Command="{Binding DialPadPressCommand}" CommandParameter="*" />
+                            <Button Grid.Row="3" Grid.Column="1" Text="0" Style="{StaticResource DialButton}" Command="{Binding DialPadPressCommand}" CommandParameter="0" />
+                            <Button Grid.Row="3" Grid.Column="2" Text="#" Style="{StaticResource DialButton}" Command="{Binding DialPadPressCommand}" CommandParameter="#" />
+                        </Grid>
+
+                        <!-- Bouton appeler -->
+                        <Button Text="Appeler"
+                                Style="{StaticResource GoldButton}"
+                                Command="{Binding CallCommand}"
+                                Margin="0,8,0,0" />
+
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- ══════ HISTORIQUE DES APPELS ══════ -->
+                <Frame BackgroundColor="{StaticResource BgCard}"
+                       BorderColor="{StaticResource BorderColor}"
+                       CornerRadius="12" Padding="16" HasShadow="False"
+                       IsVisible="{Binding IsRegistered}">
+                    <VerticalStackLayout Spacing="8">
+
+                        <Label Text="Historique des appels" FontSize="16"
+                               FontFamily="OpenSansSemibold"
+                               TextColor="{StaticResource AccentGold}" />
+
+                        <CollectionView ItemsSource="{Binding CallHistory}"
+                                        SelectionMode="Single"
+                                        SelectionChangedCommand="{Binding DialFromHistoryCommand}"
+                                        SelectionChangedCommandParameter="{Binding SelectedItem, Source={RelativeSource Self}}"
+                                        EmptyView="Aucun appel recent">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="vm:CallHistoryEntry">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" Padding="4,8"
+                                          BackgroundColor="Transparent">
+                                        <Label Grid.Column="0"
+                                               Text="{Binding Direction}"
+                                               FontSize="12"
+                                               TextColor="{StaticResource AccentBlue}"
+                                               VerticalOptions="Center"
+                                               WidthRequest="60" />
+                                        <Label Grid.Column="1"
+                                               Text="{Binding Number}"
+                                               FontSize="15"
+                                               FontFamily="OpenSansSemibold"
+                                               VerticalOptions="Center" />
+                                        <Label Grid.Column="2"
+                                               Text="{Binding TimeDisplay}"
+                                               FontSize="12"
+                                               TextColor="{StaticResource TextMuted}"
+                                               VerticalOptions="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+
+                    </VerticalStackLayout>
+                </Frame>
+
+                <!-- Espacement bas -->
+                <BoxView HeightRequest="8" BackgroundColor="Transparent" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- ═══════════════ PIED DE PAGE ═══════════════ -->
+        <Grid Grid.Row="2" BackgroundColor="{StaticResource BgMedium}"
+              Padding="16,10" ColumnDefinitions="*,Auto">
+
+            <Label Grid.Column="0" Text="KerPhone v1.0 - KerBzh"
+                   FontSize="11" TextColor="{StaticResource TextMuted}"
+                   VerticalOptions="Center" />
+
+            <Button Grid.Column="1" Text="Credits"
+                    Command="{Binding ShowCreditsCommand}"
+                    BackgroundColor="Transparent"
+                    TextColor="{StaticResource AccentBlue}"
+                    FontSize="13" FontFamily="OpenSansSemibold"
+                    VerticalOptions="Center" />
+        </Grid>
+
+    </Grid>
+
+</ContentPage>
