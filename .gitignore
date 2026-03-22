@@ -1,0 +1,40 @@
+# Build results
+bin/
+obj/
+publish/
+publish_single/
+
+# IDE
+.vs/
+*.user
+*.suo
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Debug/temp files
+*.log
+*.tmp
+edrphone_*.png
+*_selfshot.png
+*_credits*.png
+*_test.png
+
+# Scripts de test temporaires
+click_credits.ps1
+screenshot_test.ps1
+test_credits*.ps1
+final_capture.ps1
+screenshot_bitblt.ps1
+create_kerphone_logo.ps1
+
+# Settings utilisateur (contient mot de passe)
+kerphone_settings.json
+
+# PJSIP build artifacts
+native/pjproject/
+native/*.obj
+native/*.exp
+native/*.lib

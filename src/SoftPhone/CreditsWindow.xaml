@@ -1,0 +1,104 @@
+<Window x:Class="SoftPhone.CreditsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="KerPhone - A propos" Width="360" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#FF0B1426"
+        FontFamily="Segoe UI"
+        WindowStyle="ToolWindow"
+        ShowInTaskbar="False">
+
+    <Border Margin="20" CornerRadius="16" Padding="24,20"
+            BorderThickness="1" BorderBrush="#25FFFFFF">
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#FF1B3050" Offset="0"/>
+                <GradientStop Color="#FF122240" Offset="1"/>
+            </LinearGradientBrush>
+        </Border.Background>
+
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+            <!-- Logo -->
+            <Image Source="pack://application:,,,/Assets/kerphone_logo.png"
+                   Width="80" Height="80" Margin="0,0,0,14"
+                   RenderOptions.BitmapScalingMode="HighQuality"/>
+
+            <!-- Titre -->
+            <TextBlock HorizontalAlignment="Center" FontSize="22" FontWeight="Bold" Margin="0,0,0,4">
+                <Run Text="Ker" Foreground="#FFD4A520"/><Run Text="Phone" Foreground="#FFF1F5F9"/>
+            </TextBlock>
+
+            <!-- Separateur -->
+            <Border Height="1" Background="#20FFFFFF" Margin="30,14" CornerRadius="1"/>
+
+            <!-- Credits -->
+            <TextBlock HorizontalAlignment="Center" TextAlignment="Center"
+                       FontSize="13" Foreground="#FF94A3B8">
+                <Run Text="Application développée par l'association"/>
+            </TextBlock>
+            <TextBlock HorizontalAlignment="Center" Margin="0,6,0,0">
+                <Hyperlink Click="KerBzh_Click" Cursor="Hand"
+                           TextDecorations="None" Foreground="#FF3B82F6"
+>
+                    <Run Text="KerBzh" FontSize="16" FontWeight="Bold"/>
+                </Hyperlink>
+            </TextBlock>
+            <TextBlock Text="kerbzh.fr" FontSize="11" Foreground="#FF526580"
+                       HorizontalAlignment="Center" Margin="0,2,0,0"/>
+
+            <!-- Separateur -->
+            <Border Height="1" Background="#20FFFFFF" Margin="30,14" CornerRadius="1"/>
+
+            <!-- Chef de projet -->
+            <TextBlock Text="Chef de projet"
+                       FontSize="12" Foreground="#FF526580"
+                       HorizontalAlignment="Center"/>
+            <TextBlock Text="Pierre LEGENDRE"
+                       FontSize="16" FontWeight="Bold"
+                       Foreground="#FFF1F5F9"
+                       HorizontalAlignment="Center" Margin="0,4,0,0"/>
+
+            <!-- Separateur -->
+            <Border Height="1" Background="#20FFFFFF" Margin="30,12" CornerRadius="1"/>
+
+            <!-- Email -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,2,0,0">
+                <TextBlock Text="&#xE715;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                           Foreground="#FF94A3B8" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBlock VerticalAlignment="Center">
+                    <Hyperlink Click="Email_Click" Cursor="Hand"
+                               TextDecorations="None" Foreground="#FF3B82F6"
+    >
+                        <Run Text="contact@kerbzh.fr" FontSize="13"/>
+                    </Hyperlink>
+                </TextBlock>
+            </StackPanel>
+
+            <!-- Bouton Fermer -->
+            <Button Content="Fermer" Click="CloseButton_Click"
+                    Width="120" Height="36" Margin="0,20,0,0"
+                    FontSize="13" FontFamily="Segoe UI" FontWeight="SemiBold"
+                    Foreground="#FFF1F5F9" Cursor="Hand" BorderThickness="0">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="#FF1A3055" CornerRadius="10"
+                                BorderThickness="1" BorderBrush="#15FFFFFF"
+                                Padding="10,6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#FF1E3A63"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#25FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#FF3B82F6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+        </StackPanel>
+    </Border>
+</Window>
