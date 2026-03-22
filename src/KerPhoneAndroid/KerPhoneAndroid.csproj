@@ -27,8 +27,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<!-- Icone -->
-		<MauiIcon Include="Resources\AppIcon\appicon.png" />
+		<!-- Icone avec fond pour l'icone adaptative Android -->
+		<MauiIcon Include="Resources\AppIcon\appicon.png" Color="#0B1426" />
 
 		<!-- Splash Screen -->
 		<MauiSplashScreen Include="Resources\Splash\splash.png" Color="#0B1426" BaseSize="128,128" />

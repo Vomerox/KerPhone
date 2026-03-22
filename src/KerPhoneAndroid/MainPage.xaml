@@ -14,7 +14,9 @@
 
             <!-- Logo -->
             <Image Grid.Column="0" Source="kerphone_logo.png"
-                   HeightRequest="32" WidthRequest="32"
+                   HeightRequest="36" WidthRequest="36"
+                   Aspect="AspectFit"
+                   BackgroundColor="Transparent"
                    VerticalOptions="Center" />
 
             <!-- Titre + statut -->

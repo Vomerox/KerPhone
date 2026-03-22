@@ -15,9 +15,12 @@ public sealed class SipService
     private SIPTransport? _sipTransport;
     private SIPRegistrationUserAgent? _regAgent;
     private SIPUserAgent? _userAgent;
+    private RTPSession? _rtpSession;
+    private Timer? _silenceTimer;
     private bool _isRegistered;
     private bool _isMuted;
     private bool _isOnHold;
+    private uint _rtpTimestamp;
 
     private string _server = "";
     private string _username = "";
@@ -125,6 +128,7 @@ public sealed class SipService
 
             _userAgent.ClientCallFailed += (uac, error, response) =>
             {
+                StopSilenceTimer();
                 var reason = error ?? response?.ReasonPhrase ?? "Erreur inconnue";
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
@@ -135,6 +139,8 @@ public sealed class SipService
 
             _userAgent.ClientCallAnswered += (uac, response) =>
             {
+                // Demarrer l'envoi de silence RTP pour maintenir l'appel
+                StartSilenceTimer();
                 MainThread.BeginInvokeOnMainThread(() =>
                     CallStateChanged?.Invoke("En ligne"));
             };
@@ -153,6 +159,7 @@ public sealed class SipService
 
             _userAgent.OnCallHungup += (dialogue) =>
             {
+                StopSilenceTimer();
                 MainThread.BeginInvokeOnMainThread(() =>
                     CallStateChanged?.Invoke("Raccroche"));
             };
@@ -165,7 +172,7 @@ public sealed class SipService
                 destStr = $"sip:{destination}@{_server}:{_port}";
 
             // Creer une session RTP avec les codecs audio PCMU/PCMA
-            var rtpSession = new RTPSession(false, false, false);
+            _rtpSession = new RTPSession(false, false, false);
             var pcmuFormat = new SDPAudioVideoMediaFormat(SDPWellKnownMediaFormatsEnum.PCMU);
             var pcmaFormat = new SDPAudioVideoMediaFormat(SDPWellKnownMediaFormatsEnum.PCMA);
             var audioTrack = new MediaStreamTrack(
@@ -173,18 +180,28 @@ public sealed class SipService
                 false,
                 new List<SDPAudioVideoMediaFormat> { pcmuFormat, pcmaFormat },
                 MediaStreamStatusEnum.SendRecv);
-            rtpSession.addTrack(audioTrack);
-            rtpSession.AcceptRtpFromAny = true;
+            _rtpSession.addTrack(audioTrack);
+            _rtpSession.AcceptRtpFromAny = true;
+
+            // Desactiver le timeout RTP (evite le raccrochage automatique)
+            _rtpSession.OnTimeout += (mediaType) =>
+            {
+                // Ne pas fermer la session sur timeout - on gere le silence nous-memes
+            };
+
+            // Reinitialiser le compteur RTP
+            _rtpTimestamp = 0;
 
             // Effectuer l'appel avec la session RTP
             var callResult = await _userAgent.Call(
                 destStr,
                 _username,
                 _password,
-                rtpSession);
+                _rtpSession);
 
             if (!callResult)
             {
+                StopSilenceTimer();
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
                     CallStateChanged?.Invoke("Echec");
@@ -197,6 +214,7 @@ public sealed class SipService
         }
         catch (Exception ex)
         {
+            StopSilenceTimer();
             MainThread.BeginInvokeOnMainThread(() =>
             {
                 CallStateChanged?.Invoke("Echec");
@@ -204,6 +222,45 @@ public sealed class SipService
             });
             return false;
         }
+    }
+
+    /// <summary>
+    /// Demarre un timer qui envoie des paquets RTP de silence toutes les 20ms
+    /// pour maintenir le flux media actif et empecher le serveur de raccrocher.
+    /// </summary>
+    private void StartSilenceTimer()
+    {
+        StopSilenceTimer();
+
+        // Paquet de silence PCMU (mu-law) = 160 octets de 0xFF (silence mu-law)
+        // Envoye toutes les 20ms (50 paquets/seconde) = 8000 Hz / 160 samples
+        _silenceTimer = new Timer(_ =>
+        {
+            try
+            {
+                if (_rtpSession != null && !_rtpSession.IsClosed && _userAgent?.IsCallActive == true)
+                {
+                    if (!_isMuted && !_isOnHold)
+                    {
+                        // Envoyer un paquet de silence PCMU (0xFF = silence en mu-law)
+                        var silencePayload = new byte[160];
+                        Array.Fill(silencePayload, (byte)0xFF);
+
+                        _rtpSession.SendAudio(160, silencePayload);
+                    }
+                }
+            }
+            catch { }
+        }, null, 0, 20); // Toutes les 20ms
+    }
+
+    /// <summary>
+    /// Arrete le timer de silence RTP.
+    /// </summary>
+    private void StopSilenceTimer()
+    {
+        _silenceTimer?.Dispose();
+        _silenceTimer = null;
     }
 
     /// <summary>
@@ -215,6 +272,7 @@ public sealed class SipService
         {
             if (_userAgent != null && _userAgent.IsCallActive)
             {
+                StartSilenceTimer();
                 MainThread.BeginInvokeOnMainThread(() =>
                     CallStateChanged?.Invoke("En ligne"));
             }
@@ -231,6 +289,8 @@ public sealed class SipService
     /// </summary>
     public void Hangup()
     {
+        StopSilenceTimer();
+
         try
         {
             if (_userAgent != null && _userAgent.IsCallActive)
@@ -240,6 +300,16 @@ public sealed class SipService
         }
         catch { }
 
+        try
+        {
+            if (_rtpSession != null && !_rtpSession.IsClosed)
+            {
+                _rtpSession.Close("User hangup");
+            }
+        }
+        catch { }
+
+        _rtpSession = null;
         _isMuted = false;
         _isOnHold = false;
     }
@@ -311,9 +381,25 @@ public sealed class SipService
 
             _userAgent.OnCallHungup += (dialogue) =>
             {
+                StopSilenceTimer();
                 MainThread.BeginInvokeOnMainThread(() =>
                     CallStateChanged?.Invoke("Raccroche"));
             };
+
+            // Creer une session RTP pour l'appel entrant
+            _rtpSession = new RTPSession(false, false, false);
+            var pcmuFormat = new SDPAudioVideoMediaFormat(SDPWellKnownMediaFormatsEnum.PCMU);
+            var pcmaFormat = new SDPAudioVideoMediaFormat(SDPWellKnownMediaFormatsEnum.PCMA);
+            var audioTrack = new MediaStreamTrack(
+                SDPMediaTypesEnum.audio,
+                false,
+                new List<SDPAudioVideoMediaFormat> { pcmuFormat, pcmaFormat },
+                MediaStreamStatusEnum.SendRecv);
+            _rtpSession.addTrack(audioTrack);
+            _rtpSession.AcceptRtpFromAny = true;
+            _rtpTimestamp = 0;
+
+            _rtpSession.OnTimeout += (mediaType) => { };
 
             var uas = _userAgent.AcceptCall(sipRequest);
 
@@ -327,6 +413,8 @@ public sealed class SipService
     /// </summary>
     private void Cleanup()
     {
+        StopSilenceTimer();
+
         try
         {
             _regAgent?.Stop();
@@ -336,6 +424,10 @@ public sealed class SipService
                 _userAgent.Hangup();
 
             _userAgent = null;
+
+            if (_rtpSession != null && !_rtpSession.IsClosed)
+                _rtpSession.Close("Cleanup");
+            _rtpSession = null;
 
             _sipTransport?.Shutdown();
             _sipTransport = null;
