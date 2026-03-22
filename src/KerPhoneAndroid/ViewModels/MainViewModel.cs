@@ -169,20 +169,21 @@ public partial class MainViewModel : ObservableObject
         if (!IsRegistered || string.IsNullOrWhiteSpace(DialNumber)) return;
 
         IsConnecting = true;
+        IsInCall = true;
         CallStatus = "Appel en cours...";
         RemoteParty = DialNumber;
+        UpdatePanelVisibility();
 
         var success = await _sip.MakeCallAsync(DialNumber);
         if (success)
         {
-            IsInCall = true;
             AddHistory(DialNumber, "Sortant");
-            UpdatePanelVisibility();
         }
         else
         {
             StatusMessage = "Echec de l'appel";
             IsConnecting = false;
+            ResetCallState();
         }
     }
 
