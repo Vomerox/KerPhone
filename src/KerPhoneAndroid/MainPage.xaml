@@ -348,7 +348,7 @@
         <!-- APPEL ENTRANT                                                     -->
         <!-- ================================================================ -->
         <Grid IsVisible="{Binding ShowIncomingCall}"
-              BackgroundColor="{StaticResource CallBgDark}"
+              BackgroundColor="{StaticResource BgWhite}"
               Padding="0">
             <VerticalStackLayout Spacing="20" VerticalOptions="Center" HorizontalOptions="Center"
                                  Padding="40">
@@ -358,22 +358,22 @@
                        Aspect="AspectFit" HorizontalOptions="Center" />
 
                 <Label Text="Appel entrant" FontSize="18"
-                       TextColor="#A0C4FF"
+                       TextColor="{StaticResource KerBlue}"
                        HorizontalTextAlignment="Center" />
 
                 <Label Text="{Binding IncomingCallerInfo}" FontSize="28"
                        FontFamily="OpenSansSemibold"
-                       TextColor="{StaticResource TextWhite}"
+                       TextColor="{StaticResource TextDark}"
                        HorizontalTextAlignment="Center" />
 
-                <HorizontalStackLayout Spacing="24" HorizontalOptions="Center" Margin="0,20,0,0">
-                    <Button Text="&#x2713; Répondre"
+                <HorizontalStackLayout Spacing="16" HorizontalOptions="Center" Margin="0,20,0,0">
+                    <Button Text="Répondre"
                             BackgroundColor="{StaticResource SuccessGreen}"
                             TextColor="White" CornerRadius="28"
                             HeightRequest="56" MinimumWidthRequest="130"
                             FontFamily="OpenSansSemibold" FontSize="15"
                             Command="{Binding AnswerIncomingCommand}" />
-                    <Button Text="&#x2717; Refuser"
+                    <Button Text="Refuser"
                             Style="{StaticResource DangerButton}"
                             Command="{Binding RejectIncomingCommand}" />
                 </HorizontalStackLayout>
@@ -381,10 +381,10 @@
         </Grid>
 
         <!-- ================================================================ -->
-        <!-- APPEL EN COURS (fond sombre bleu, design epure)                  -->
+        <!-- APPEL EN COURS (fond blanc, design epure)                        -->
         <!-- ================================================================ -->
         <Grid IsVisible="{Binding ShowActiveCall}"
-              BackgroundColor="{StaticResource CallBgDark}"
+              BackgroundColor="{StaticResource BgWhite}"
               Padding="0">
 
             <VerticalStackLayout Spacing="12" VerticalOptions="Center"
@@ -399,42 +399,38 @@
                 <!-- Numero -->
                 <Label Text="{Binding RemoteParty}" FontSize="28"
                        FontFamily="OpenSansSemibold"
-                       TextColor="{StaticResource TextWhite}"
+                       TextColor="{StaticResource TextDark}"
                        HorizontalTextAlignment="Center" />
 
                 <!-- Statut appel -->
                 <Label Text="{Binding CallStatus}" FontSize="15"
-                       TextColor="#A0C4FF"
+                       TextColor="{StaticResource KerBlue}"
                        HorizontalTextAlignment="Center" />
 
                 <!-- Duree -->
                 <Label Text="{Binding CallDuration}" FontSize="42"
                        FontFamily="OpenSansSemibold"
-                       TextColor="{StaticResource TextWhite}"
+                       TextColor="{StaticResource TextDark}"
                        HorizontalTextAlignment="Center"
                        Margin="0,8,0,20" />
 
-                <!-- Boutons: Mute + Hang up -->
-                <HorizontalStackLayout Spacing="24" HorizontalOptions="Center">
+                <!-- Boutons: Micro + Raccrocher -->
+                <HorizontalStackLayout Spacing="16" HorizontalOptions="Center">
 
-                    <!-- Bouton Micro (cercle gris) -->
-                    <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
-                        <Button Text="{Binding IsMuted, Converter={StaticResource MuteTextConverter}}"
-                                Style="{StaticResource CallActionButton}"
-                                Command="{Binding ToggleMuteCommand}" />
-                        <Label Text="Micro" FontSize="11" TextColor="#8899BB"
-                               HorizontalTextAlignment="Center" />
-                    </VerticalStackLayout>
+                    <!-- Bouton Micro -->
+                    <Button Text="Micro"
+                            BackgroundColor="{StaticResource DialBg}"
+                            TextColor="{StaticResource TextDark}"
+                            CornerRadius="28"
+                            HeightRequest="56" MinimumWidthRequest="130"
+                            FontFamily="OpenSansSemibold" FontSize="15"
+                            Command="{Binding ToggleMuteCommand}" />
 
-                    <!-- Bouton Raccrocher (ovale rouge) -->
-                    <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
-                        <Button Text="&#x1F4F5;"
-                                Style="{StaticResource DangerButton}"
-                                Command="{Binding HangupCommand}"
-                                x:Name="HangupButton" />
-                        <Label Text="Raccrocher" FontSize="11" TextColor="#8899BB"
-                               HorizontalTextAlignment="Center" />
-                    </VerticalStackLayout>
+                    <!-- Bouton Raccrocher -->
+                    <Button Text="Raccrocher"
+                            Style="{StaticResource DangerButton}"
+                            Command="{Binding HangupCommand}"
+                            x:Name="HangupButton" />
 
                 </HorizontalStackLayout>
 
