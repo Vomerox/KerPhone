@@ -120,10 +120,28 @@ public sealed class SipService
     /// </summary>
     public async Task<bool> MakeCallAsync(string destination)
     {
-        if (_sipTransport == null || !_isRegistered) return false;
+        if (_sipTransport == null || !_isRegistered)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+                ErrorOccurred?.Invoke("Non enregistre sur le serveur SIP."));
+            return false;
+        }
 
         try
         {
+            // Nettoyer tout appel precedent
+            if (_userAgent != null)
+            {
+                try { if (_userAgent.IsCallActive) _userAgent.Hangup(); } catch { }
+                _userAgent = null;
+            }
+            if (_rtpSession != null)
+            {
+                try { if (!_rtpSession.IsClosed) _rtpSession.Close("New call"); } catch { }
+                _rtpSession = null;
+            }
+            StopSilenceTimer();
+
             _userAgent = new SIPUserAgent(_sipTransport, null);
 
             _userAgent.ClientCallFailed += (uac, error, response) =>
@@ -169,7 +187,7 @@ public sealed class SipService
             if (destination.Contains("@"))
                 destStr = destination.StartsWith("sip:") ? destination : $"sip:{destination}";
             else
-                destStr = $"sip:{destination}@{_server}:{_port}";
+                destStr = $"sip:{destination}@{_server}";
 
             // Creer une session RTP avec les codecs audio PCMU/PCMA
             _rtpSession = new RTPSession(false, false, false);
@@ -186,11 +204,14 @@ public sealed class SipService
             // Desactiver le timeout RTP (evite le raccrochage automatique)
             _rtpSession.OnTimeout += (mediaType) =>
             {
-                // Ne pas fermer la session sur timeout - on gere le silence nous-memes
+                // Ne rien faire - on gere le silence nous-memes
             };
 
             // Reinitialiser le compteur RTP
             _rtpTimestamp = 0;
+
+            // Demarrer l'envoi de silence AVANT l'appel pour que le flux RTP soit pret
+            StartSilenceTimer();
 
             // Effectuer l'appel avec la session RTP
             var callResult = await _userAgent.Call(
@@ -238,14 +259,12 @@ public sealed class SipService
         {
             try
             {
-                if (_rtpSession != null && !_rtpSession.IsClosed && _userAgent?.IsCallActive == true)
+                if (_rtpSession != null && !_rtpSession.IsClosed)
                 {
                     if (!_isMuted && !_isOnHold)
                     {
-                        // Envoyer un paquet de silence PCMU (0xFF = silence en mu-law)
                         var silencePayload = new byte[160];
                         Array.Fill(silencePayload, (byte)0xFF);
-
                         _rtpSession.SendAudio(160, silencePayload);
                     }
                 }

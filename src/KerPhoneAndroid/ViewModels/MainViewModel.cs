@@ -166,22 +166,38 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task CallAsync()
     {
-        if (!IsRegistered || string.IsNullOrWhiteSpace(DialNumber)) return;
-
-        IsConnecting = true;
-        IsInCall = true;
-        CallStatus = "Appel en cours...";
-        RemoteParty = DialNumber;
-        UpdatePanelVisibility();
-
-        var success = await _sip.MakeCallAsync(DialNumber);
-        if (success)
+        if (!IsRegistered || string.IsNullOrWhiteSpace(DialNumber))
         {
-            AddHistory(DialNumber, "Sortant");
+            if (!IsRegistered)
+                StatusMessage = "Non connecte au serveur SIP.";
+            else
+                StatusMessage = "Veuillez entrer un numero.";
+            return;
         }
-        else
+
+        try
         {
-            StatusMessage = "Echec de l'appel";
+            IsConnecting = true;
+            IsInCall = true;
+            CallStatus = "Appel en cours...";
+            RemoteParty = DialNumber;
+            UpdatePanelVisibility();
+
+            var success = await _sip.MakeCallAsync(DialNumber);
+            if (success)
+            {
+                AddHistory(DialNumber, "Sortant");
+            }
+            else
+            {
+                StatusMessage = "Echec de l'appel";
+                IsConnecting = false;
+                ResetCallState();
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Erreur : {ex.Message}";
             IsConnecting = false;
             ResetCallState();
         }

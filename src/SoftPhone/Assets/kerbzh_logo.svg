@@ -1,0 +1,47 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="arm1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2E86AB"/>
+      <stop offset="100%" stop-color="#1B4965"/>
+    </linearGradient>
+    <linearGradient id="arm2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D4A843"/>
+      <stop offset="100%" stop-color="#B8902E"/>
+    </linearGradient>
+    <linearGradient id="arm3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3D5A80"/>
+      <stop offset="100%" stop-color="#0C2340"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(60,60)">
+    <!-- Triskell arm 1 -->
+    <path d="M0,0 C-12,-18 -4,-38 14,-36" stroke="url(#arm1)" fill="none" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="14" cy="-36" r="5" fill="#2E86AB"/>
+    <!-- Circuit extension 1 -->
+    <line x1="14" y1="-36" x2="22" y2="-44" stroke="#2E86AB" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="22" cy="-44" r="2.5" fill="#2E86AB"/>
+
+    <!-- Triskell arm 2 (rotated 120deg) -->
+    <g transform="rotate(120)">
+      <path d="M0,0 C-12,-18 -4,-38 14,-36" stroke="url(#arm2)" fill="none" stroke-width="7" stroke-linecap="round"/>
+      <circle cx="14" cy="-36" r="5" fill="#D4A843"/>
+      <line x1="14" y1="-36" x2="22" y2="-44" stroke="#D4A843" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="22" cy="-44" r="2.5" fill="#D4A843"/>
+    </g>
+
+    <!-- Triskell arm 3 (rotated 240deg) -->
+    <g transform="rotate(240)">
+      <path d="M0,0 C-12,-18 -4,-38 14,-36" stroke="url(#arm3)" fill="none" stroke-width="7" stroke-linecap="round"/>
+      <circle cx="14" cy="-36" r="5" fill="#3D5A80"/>
+      <line x1="14" y1="-36" x2="22" y2="-44" stroke="#3D5A80" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="22" cy="-44" r="2.5" fill="#3D5A80"/>
+    </g>
+
+    <!-- Network triangle connecting nodes -->
+    <polygon points="14,-36 -35,12 21,24" fill="none" stroke="#0C2340" stroke-width="1" stroke-dasharray="3,4" opacity="0.3"/>
+
+    <!-- Central hub -->
+    <circle cx="0" cy="0" r="6" fill="#0C2340"/>
+    <circle cx="0" cy="0" r="3" fill="#D4A843"/>
+  </g>
+</svg>

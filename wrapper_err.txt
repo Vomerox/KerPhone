@@ -1,0 +1,5 @@
+'vswhere.exe' n'est pas reconnu en tant que commande interne
+ou externe, un programme ex‚cutable ou un fichier de commandes.
+Compilateur d'optimisation Microsoft (R) C/C++ versionÿ19.44.35225 pour x64
+Copyright (C) Microsoft Corporation. Tous droits r‚serv‚s.
+
