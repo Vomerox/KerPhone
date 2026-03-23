@@ -19,7 +19,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _sipPort = "5060";
 
     /* --- Etat --- */
-    [ObservableProperty] private string _registrationStatus = "Non connecte";
+    [ObservableProperty] private string _registrationStatus = "Non connecté";
     [ObservableProperty] private string _registrationColor = "#888888";
     [ObservableProperty] private bool _isRegistered;
     private bool _isUnregistering;
@@ -137,7 +137,7 @@ public partial class MainViewModel : ObservableObject
 
         if (!result)
         {
-            RegistrationStatus = "Echec de connexion";
+            RegistrationStatus = "Échec de connexion";
             RegistrationColor = "#FF4444";
             IsConnecting = false;
         }
@@ -149,9 +149,9 @@ public partial class MainViewModel : ObservableObject
         _isUnregistering = true;
 
         IsRegistered = false;
-        RegistrationStatus = "Deconnecte";
+        RegistrationStatus = "Déconnecté";
         RegistrationColor = "#888888";
-        StatusMessage = "Deconnecte du serveur SIP.";
+        StatusMessage = "Déconnecté du serveur SIP.";
 
         try
         {
@@ -169,9 +169,9 @@ public partial class MainViewModel : ObservableObject
         if (!IsRegistered || string.IsNullOrWhiteSpace(DialNumber))
         {
             if (!IsRegistered)
-                StatusMessage = "Non connecte au serveur SIP.";
+                StatusMessage = "Non connecté au serveur SIP.";
             else
-                StatusMessage = "Veuillez entrer un numero.";
+                StatusMessage = "Veuillez entrer un numéro.";
             return;
         }
 
@@ -190,7 +190,7 @@ public partial class MainViewModel : ObservableObject
             }
             else
             {
-                StatusMessage = "Echec de l'appel";
+                StatusMessage = "Échec de l'appel";
                 IsConnecting = false;
                 ResetCallState();
             }
@@ -215,7 +215,7 @@ public partial class MainViewModel : ObservableObject
         {
             _callTimer?.Stop();
             ResetCallState();
-            StatusMessage = "Appel termine";
+            StatusMessage = "Appel terminé";
         }
     }
 
@@ -303,7 +303,7 @@ public partial class MainViewModel : ObservableObject
         {
             _isUnregistering = false;
             IsRegistered = false;
-            RegistrationStatus = "Deconnecte";
+            RegistrationStatus = "Déconnecté";
             RegistrationColor = "#888888";
             IsConnecting = false;
             UpdatePanelVisibility();
@@ -313,9 +313,9 @@ public partial class MainViewModel : ObservableObject
         if (success)
         {
             IsRegistered = true;
-            RegistrationStatus = "Connecte";
+            RegistrationStatus = "Connecté";
             RegistrationColor = "#44CC44";
-            StatusMessage = $"Connecte en tant que {SipUser}@{SipServer}";
+            StatusMessage = $"Connecté en tant que {SipUser}@{SipServer}";
         }
         else
         {
@@ -357,11 +357,11 @@ public partial class MainViewModel : ObservableObject
                 _callTimer?.Start();
                 break;
 
-            case "Raccroche":
-            case "Echec":
+            case "Raccroché":
+            case "Échec":
                 _callTimer?.Stop();
                 ResetCallState();
-                StatusMessage = state == "Raccroche" ? "Appel termine" : "Echec de l'appel";
+                StatusMessage = state == "Raccroché" ? "Appel terminé" : "Échec de l'appel";
                 break;
 
             case "Sonnerie...":

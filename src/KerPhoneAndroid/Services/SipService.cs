@@ -70,7 +70,7 @@ public sealed class SipService
             {
                 _isRegistered = true;
                 MainThread.BeginInvokeOnMainThread(() =>
-                    RegistrationStateChanged?.Invoke(true, "Connecte"));
+                    RegistrationStateChanged?.Invoke(true, "Connecté"));
             };
 
             _regAgent.RegistrationFailed += (uri, resp, message) =>
@@ -85,7 +85,7 @@ public sealed class SipService
             {
                 _isRegistered = false;
                 MainThread.BeginInvokeOnMainThread(() =>
-                    RegistrationStateChanged?.Invoke(false, "Deconnecte"));
+                    RegistrationStateChanged?.Invoke(false, "Déconnecté"));
             };
 
             _regAgent.Start();
@@ -118,7 +118,7 @@ public sealed class SipService
         if (_sipTransport == null || !_isRegistered)
         {
             MainThread.BeginInvokeOnMainThread(() =>
-                ErrorOccurred?.Invoke("Non enregistre sur le serveur SIP."));
+                ErrorOccurred?.Invoke("Non enregistré sur le serveur SIP."));
             return false;
         }
 
@@ -137,8 +137,8 @@ public sealed class SipService
                 StopAudio();
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
-                    CallStateChanged?.Invoke("Echec");
-                    ErrorOccurred?.Invoke($"Appel echoue : {reason}");
+                    CallStateChanged?.Invoke("Échec");
+                    ErrorOccurred?.Invoke($"Appel échoué : {reason}");
                 });
             };
 
@@ -167,7 +167,7 @@ public sealed class SipService
                 _isCallSetup = false;
                 StopAudio();
                 MainThread.BeginInvokeOnMainThread(() =>
-                    CallStateChanged?.Invoke("Raccroche"));
+                    CallStateChanged?.Invoke("Raccroché"));
             };
 
             // URI de destination
@@ -214,8 +214,8 @@ public sealed class SipService
                 StopAudio();
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
-                    CallStateChanged?.Invoke("Echec");
-                    ErrorOccurred?.Invoke("Le serveur a rejete l'appel.");
+                    CallStateChanged?.Invoke("Échec");
+                    ErrorOccurred?.Invoke("Le serveur a rejeté l'appel.");
                 });
                 return false;
             }
@@ -228,7 +228,7 @@ public sealed class SipService
             StopAudio();
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                CallStateChanged?.Invoke("Echec");
+                CallStateChanged?.Invoke("Échec");
                 ErrorOccurred?.Invoke($"Erreur d'appel : {ex.Message}");
             });
             return false;
@@ -573,7 +573,7 @@ public sealed class SipService
         catch (Exception ex)
         {
             MainThread.BeginInvokeOnMainThread(() =>
-                ErrorOccurred?.Invoke($"Erreur reponse : {ex.Message}"));
+                ErrorOccurred?.Invoke($"Erreur réponse : {ex.Message}"));
         }
     }
 
@@ -602,7 +602,7 @@ public sealed class SipService
                 _isCallSetup = false;
                 StopAudio();
                 MainThread.BeginInvokeOnMainThread(() =>
-                    CallStateChanged?.Invoke("Raccroche"));
+                    CallStateChanged?.Invoke("Raccroché"));
             };
 
             _rtpSession = new RTPSession(false, false, false);

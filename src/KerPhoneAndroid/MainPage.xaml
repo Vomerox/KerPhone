@@ -50,20 +50,6 @@
                                IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}"
                                HorizontalTextAlignment="Center" Margin="0,0,0,4" />
 
-                        <!-- Champ Poste (identifiant) -->
-                        <Border StrokeShape="RoundRectangle 10"
-                                Stroke="{StaticResource BorderLight}"
-                                StrokeThickness="1"
-                                BackgroundColor="{StaticResource BgLight}"
-                                Padding="0" HeightRequest="50">
-                            <Entry Placeholder="Poste"
-                                   Text="{Binding SipUser}"
-                                   Keyboard="Plain"
-                                   ReturnType="Next"
-                                   BackgroundColor="Transparent"
-                                   Margin="12,0" />
-                        </Border>
-
                         <!-- Champ Serveur SIP -->
                         <Border StrokeShape="RoundRectangle 10"
                                 Stroke="{StaticResource BorderLight}"
@@ -73,6 +59,20 @@
                             <Entry Placeholder="Serveur SIP"
                                    Text="{Binding SipServer}"
                                    Keyboard="Url"
+                                   ReturnType="Next"
+                                   BackgroundColor="Transparent"
+                                   Margin="12,0" />
+                        </Border>
+
+                        <!-- Champ Poste (identifiant) -->
+                        <Border StrokeShape="RoundRectangle 10"
+                                Stroke="{StaticResource BorderLight}"
+                                StrokeThickness="1"
+                                BackgroundColor="{StaticResource BgLight}"
+                                Padding="0" HeightRequest="50">
+                            <Entry Placeholder="Poste"
+                                   Text="{Binding SipUser}"
+                                   Keyboard="Plain"
                                    ReturnType="Next"
                                    BackgroundColor="Transparent"
                                    Margin="12,0" />
@@ -135,7 +135,7 @@
                            TextColor="{StaticResource SuccessGreen}" />
                 </VerticalStackLayout>
 
-                <Button Grid.Column="3" Text="Deconnexion &#x23FB;"
+                <Button Grid.Column="3" Text="&#x2716; Deconnexion"
                         Command="{Binding DisconnectCommand}"
                         BackgroundColor="{StaticResource DangerRed}"
                         TextColor="White"
@@ -367,7 +367,7 @@
                        HorizontalTextAlignment="Center" />
 
                 <HorizontalStackLayout Spacing="24" HorizontalOptions="Center" Margin="0,20,0,0">
-                    <Button Text="&#x2713; Repondre"
+                    <Button Text="&#x2713; Répondre"
                             BackgroundColor="{StaticResource SuccessGreen}"
                             TextColor="White" CornerRadius="28"
                             HeightRequest="56" MinimumWidthRequest="130"
@@ -417,12 +417,12 @@
                 <!-- Boutons: Mute + Hang up -->
                 <HorizontalStackLayout Spacing="24" HorizontalOptions="Center">
 
-                    <!-- Bouton Mute (cercle gris) -->
+                    <!-- Bouton Micro (cercle gris) -->
                     <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
                         <Button Text="{Binding IsMuted, Converter={StaticResource MuteTextConverter}}"
                                 Style="{StaticResource CallActionButton}"
                                 Command="{Binding ToggleMuteCommand}" />
-                        <Label Text="Mute" FontSize="11" TextColor="#8899BB"
+                        <Label Text="Micro" FontSize="11" TextColor="#8899BB"
                                HorizontalTextAlignment="Center" />
                     </VerticalStackLayout>
 
@@ -432,7 +432,7 @@
                                 Style="{StaticResource DangerButton}"
                                 Command="{Binding HangupCommand}"
                                 x:Name="HangupButton" />
-                        <Label Text="Hang up" FontSize="11" TextColor="#8899BB"
+                        <Label Text="Raccrocher" FontSize="11" TextColor="#8899BB"
                                HorizontalTextAlignment="Center" />
                     </VerticalStackLayout>
 

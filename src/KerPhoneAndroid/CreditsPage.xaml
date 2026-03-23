@@ -2,7 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="KerPhoneAndroid.CreditsPage"
-             Title="A propos"
+             Title="À propos"
              Shell.NavBarIsVisible="False"
              BackgroundColor="{StaticResource BgWhite}">
 
@@ -19,18 +19,14 @@
                     TextColor="{StaticResource TextDark}"
                     FontSize="22" WidthRequest="44" HeightRequest="44" />
 
-            <Label Grid.Column="1" Text="A propos"
+            <Label Grid.Column="1" Text="À propos"
                    FontSize="18" FontFamily="OpenSansSemibold"
                    TextColor="{StaticResource TextDark}"
                    HorizontalTextAlignment="Center"
                    VerticalOptions="Center" />
 
-            <!-- Icone power (retour) -->
-            <Button Grid.Column="2" Text="&#x23FB;"
-                    Clicked="OnBackClicked"
-                    BackgroundColor="Transparent"
-                    TextColor="{StaticResource DangerRed}"
-                    FontSize="20" WidthRequest="44" HeightRequest="44" />
+            <!-- Espace vide a droite -->
+            <BoxView Grid.Column="2" WidthRequest="44" BackgroundColor="Transparent" />
         </Grid>
 
         <!-- Contenu -->
@@ -50,14 +46,14 @@
                        TextColor="{StaticResource TextDark}"
                        HorizontalTextAlignment="Center" />
 
-                <Label Text="v1.1.0"
+                <Label Text="v1.2.0"
                        FontSize="13"
                        TextColor="{StaticResource TextMuted}"
                        HorizontalTextAlignment="Center"
                        Margin="0,-8,0,0" />
 
                 <!-- Description -->
-                <Label Text="Softphone SIP simple et leger"
+                <Label Text="Softphone SIP simple et léger"
                        FontSize="14"
                        TextColor="{StaticResource TextMedium}"
                        HorizontalTextAlignment="Center"
@@ -74,7 +70,7 @@
                        HorizontalTextAlignment="Center">
                     <Label.FormattedText>
                         <FormattedString>
-                            <Span Text="Developpe en Bretagne " />
+                            <Span Text="Développé en Bretagne " />
                             <Span Text="&#x2691;" FontSize="18" />
                         </FormattedString>
                     </Label.FormattedText>
@@ -82,7 +78,7 @@
 
                 <!-- Association KerBzh -->
                 <VerticalStackLayout Spacing="4" HorizontalOptions="Center" Margin="0,8,0,0">
-                    <Label Text="Application developpee par l'association"
+                    <Label Text="Application développée par l'association"
                            FontSize="13" TextColor="{StaticResource TextMuted}"
                            HorizontalTextAlignment="Center" />
                     <Label Text="KerBzh"
@@ -106,20 +102,6 @@
                            TextColor="{StaticResource TextDark}"
                            HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
-
-                <!-- Contact -->
-                <HorizontalStackLayout Spacing="6" HorizontalOptions="Center" Margin="0,8,0,0">
-                    <Label Text="&#x2709;" FontSize="16" TextColor="{StaticResource KerBlue}"
-                           VerticalOptions="Center" />
-                    <Label Text="contact@kerbzh.fr" FontSize="14"
-                           TextColor="{StaticResource KerBlue}"
-                           TextDecorations="Underline"
-                           VerticalOptions="Center">
-                        <Label.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnEmailTapped" />
-                        </Label.GestureRecognizers>
-                    </Label>
-                </HorizontalStackLayout>
 
             </VerticalStackLayout>
         </ScrollView>
