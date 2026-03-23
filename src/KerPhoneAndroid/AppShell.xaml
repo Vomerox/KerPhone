@@ -5,7 +5,7 @@
        x:Class="KerPhoneAndroid.AppShell"
        Shell.FlyoutBehavior="Disabled"
        Shell.NavBarIsVisible="False"
-       BackgroundColor="{StaticResource BgDark}">
+       BackgroundColor="{StaticResource BgWhite}">
 
     <ShellContent
         ContentTemplate="{DataTemplate local:MainPage}" />
