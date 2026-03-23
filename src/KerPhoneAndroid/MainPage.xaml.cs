@@ -23,18 +23,11 @@ public partial class MainPage : ContentPage
         // Demander les permissions Android au runtime
         await RequestPermissionsAsync();
 
-        // Gerer la touche Entree sur le champ mot de passe -> connexion
+        // Touche Entree sur le champ mot de passe -> connexion
         PasswordEntry.Completed += (_, _) =>
         {
             if (_viewModel.ConnectCommand.CanExecute(null))
                 _viewModel.ConnectCommand.Execute(null);
-        };
-
-        // Gerer la touche Entree sur le champ numero -> appeler
-        DialEntry.Completed += (_, _) =>
-        {
-            if (_viewModel.CallCommand.CanExecute(null))
-                _viewModel.CallCommand.Execute(null);
         };
     }
 
@@ -60,7 +53,11 @@ public partial class MainPage : ContentPage
 public class StringToBoolConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
-        => !string.IsNullOrEmpty(value as string);
+    {
+        if (value is int count)
+            return count > 0;
+        return !string.IsNullOrEmpty(value as string);
+    }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
         => throw new NotImplementedException();
@@ -84,7 +81,7 @@ public class InvertedBoolConverter : IValueConverter
 public class MuteTextConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
-        => value is true ? "Son actif" : "Muet";
+        => value is true ? "&#x1F50A;" : "&#x1F507;";
 
     public object ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
         => throw new NotImplementedException();

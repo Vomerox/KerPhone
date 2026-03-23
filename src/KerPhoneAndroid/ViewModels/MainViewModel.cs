@@ -206,8 +206,17 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void Hangup()
     {
-        _sip.Hangup();
-        ResetCallState();
+        try
+        {
+            _sip.Hangup();
+        }
+        catch { }
+        finally
+        {
+            _callTimer?.Stop();
+            ResetCallState();
+            StatusMessage = "Appel termine";
+        }
     }
 
     [RelayCommand]

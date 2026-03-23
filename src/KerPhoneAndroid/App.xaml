@@ -12,83 +12,87 @@
             <local:MuteTextConverter x:Key="MuteTextConverter" />
             <local:HoldTextConverter x:Key="HoldTextConverter" />
 
-            <!-- Couleurs du theme sombre KerPhone -->
-            <Color x:Key="BgDark">#0B1426</Color>
-            <Color x:Key="BgMedium">#111D35</Color>
-            <Color x:Key="BgLight">#1A2744</Color>
-            <Color x:Key="BgCard">#162040</Color>
-            <Color x:Key="AccentGold">#D4A520</Color>
-            <Color x:Key="AccentBlue">#3B82F6</Color>
-            <Color x:Key="TextPrimary">#FFFFFF</Color>
-            <Color x:Key="TextSecondary">#A0AEC0</Color>
-            <Color x:Key="TextMuted">#6B7280</Color>
-            <Color x:Key="DangerRed">#EF4444</Color>
-            <Color x:Key="SuccessGreen">#22C55E</Color>
-            <Color x:Key="WarningOrange">#FFA500</Color>
-            <Color x:Key="BorderColor">#2A3A5C</Color>
+            <!-- === THEME CLAIR KerPhone === -->
+            <Color x:Key="BgWhite">#FFFFFF</Color>
+            <Color x:Key="BgLight">#F0F4F8</Color>
+            <Color x:Key="BgCard">#FFFFFF</Color>
+            <Color x:Key="BgHeader">#FAFBFC</Color>
+
+            <!-- Bleu KerPhone (du logo) -->
+            <Color x:Key="KerBlue">#1565C0</Color>
+            <Color x:Key="KerBlueDark">#0D47A1</Color>
+            <Color x:Key="KerBlueLight">#E3F2FD</Color>
+
+            <!-- Appel actif - fond sombre -->
+            <Color x:Key="CallBgDark">#0A1628</Color>
+            <Color x:Key="CallBgMedium">#142A50</Color>
+
+            <!-- Textes -->
+            <Color x:Key="TextDark">#1A1A2E</Color>
+            <Color x:Key="TextMedium">#555555</Color>
+            <Color x:Key="TextMuted">#999999</Color>
+            <Color x:Key="TextWhite">#FFFFFF</Color>
+
+            <!-- Accents -->
+            <Color x:Key="DangerRed">#E53935</Color>
+            <Color x:Key="SuccessGreen">#43A047</Color>
+            <Color x:Key="WarningOrange">#FF9800</Color>
+            <Color x:Key="BorderLight">#E0E6ED</Color>
+
+            <!-- Couleurs dialpad -->
+            <Color x:Key="DialBg">#E8EDF5</Color>
+            <Color x:Key="DialText">#1A1A2E</Color>
+            <Color x:Key="DialSub">#7A8BA0</Color>
 
             <!-- Styles globaux -->
             <Style TargetType="Page" ApplyToDerivedTypes="True">
-                <Setter Property="BackgroundColor" Value="{StaticResource BgDark}" />
+                <Setter Property="BackgroundColor" Value="{StaticResource BgWhite}" />
             </Style>
 
             <Style TargetType="Label">
-                <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+                <Setter Property="TextColor" Value="{StaticResource TextDark}" />
                 <Setter Property="FontFamily" Value="OpenSansRegular" />
             </Style>
 
             <Style TargetType="Entry">
-                <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+                <Setter Property="TextColor" Value="{StaticResource TextDark}" />
                 <Setter Property="PlaceholderColor" Value="{StaticResource TextMuted}" />
                 <Setter Property="BackgroundColor" Value="{StaticResource BgLight}" />
                 <Setter Property="FontFamily" Value="OpenSansRegular" />
+                <Setter Property="FontSize" Value="15" />
+                <Setter Property="MinimumHeightRequest" Value="48" />
             </Style>
 
-            <Style x:Key="GoldButton" TargetType="Button">
-                <Setter Property="BackgroundColor" Value="{StaticResource AccentGold}" />
-                <Setter Property="TextColor" Value="{StaticResource BgDark}" />
+            <!-- Bouton bleu principal -->
+            <Style x:Key="PrimaryButton" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="{StaticResource KerBlue}" />
+                <Setter Property="TextColor" Value="{StaticResource TextWhite}" />
                 <Setter Property="FontFamily" Value="OpenSansSemibold" />
-                <Setter Property="CornerRadius" Value="8" />
-                <Setter Property="HeightRequest" Value="48" />
-                <Setter Property="FontSize" Value="16" />
+                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="HeightRequest" Value="52" />
+                <Setter Property="FontSize" Value="17" />
             </Style>
 
-            <Style x:Key="BlueButton" TargetType="Button">
-                <Setter Property="BackgroundColor" Value="{StaticResource AccentBlue}" />
-                <Setter Property="TextColor" Value="#FFFFFF" />
-                <Setter Property="FontFamily" Value="OpenSansSemibold" />
-                <Setter Property="CornerRadius" Value="8" />
-                <Setter Property="HeightRequest" Value="48" />
-                <Setter Property="FontSize" Value="16" />
-            </Style>
-
+            <!-- Bouton danger rouge -->
             <Style x:Key="DangerButton" TargetType="Button">
                 <Setter Property="BackgroundColor" Value="{StaticResource DangerRed}" />
-                <Setter Property="TextColor" Value="#FFFFFF" />
+                <Setter Property="TextColor" Value="{StaticResource TextWhite}" />
                 <Setter Property="FontFamily" Value="OpenSansSemibold" />
-                <Setter Property="CornerRadius" Value="8" />
-                <Setter Property="HeightRequest" Value="48" />
-                <Setter Property="FontSize" Value="16" />
-            </Style>
-
-            <Style x:Key="DialButton" TargetType="Button">
-                <Setter Property="BackgroundColor" Value="{StaticResource BgLight}" />
-                <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
-                <Setter Property="FontFamily" Value="OpenSansSemibold" />
-                <Setter Property="CornerRadius" Value="12" />
-                <Setter Property="FontSize" Value="22" />
-                <Setter Property="HeightRequest" Value="64" />
-                <Setter Property="WidthRequest" Value="80" />
-            </Style>
-
-            <Style x:Key="CallActionButton" TargetType="Button">
-                <Setter Property="BackgroundColor" Value="{StaticResource BgLight}" />
-                <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
-                <Setter Property="FontFamily" Value="OpenSansSemibold" />
-                <Setter Property="CornerRadius" Value="12" />
-                <Setter Property="FontSize" Value="14" />
+                <Setter Property="CornerRadius" Value="28" />
                 <Setter Property="HeightRequest" Value="56" />
-                <Setter Property="MinimumWidthRequest" Value="90" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="MinimumWidthRequest" Value="140" />
+            </Style>
+
+            <!-- Bouton action appel (mute, hold) -->
+            <Style x:Key="CallActionButton" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="#3A4A6A" />
+                <Setter Property="TextColor" Value="{StaticResource TextWhite}" />
+                <Setter Property="FontFamily" Value="OpenSansSemibold" />
+                <Setter Property="CornerRadius" Value="30" />
+                <Setter Property="FontSize" Value="13" />
+                <Setter Property="HeightRequest" Value="60" />
+                <Setter Property="WidthRequest" Value="60" />
             </Style>
 
         </ResourceDictionary>

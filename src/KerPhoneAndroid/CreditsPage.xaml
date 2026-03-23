@@ -2,111 +2,143 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="KerPhoneAndroid.CreditsPage"
-             Title="Credits"
-             BackgroundColor="{StaticResource BgDark}">
+             Title="A propos"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource BgWhite}">
 
     <Grid RowDefinitions="Auto,*,Auto" Padding="0">
 
         <!-- En-tete -->
-        <Grid Grid.Row="0" BackgroundColor="{StaticResource BgMedium}"
-              Padding="16,12" ColumnDefinitions="Auto,*,Auto">
-            <Button Grid.Column="0" Text="Retour"
+        <Grid Grid.Row="0" BackgroundColor="{StaticResource BgHeader}"
+              Padding="12,10" ColumnDefinitions="Auto,*,Auto">
+
+            <!-- Fleche retour -->
+            <Button Grid.Column="0" Text="&#x2190;"
                     Clicked="OnBackClicked"
                     BackgroundColor="Transparent"
-                    TextColor="{StaticResource AccentBlue}"
-                    FontSize="14" FontFamily="OpenSansSemibold" />
-            <Label Grid.Column="1" Text="Credits"
+                    TextColor="{StaticResource TextDark}"
+                    FontSize="22" WidthRequest="44" HeightRequest="44" />
+
+            <Label Grid.Column="1" Text="A propos"
                    FontSize="18" FontFamily="OpenSansSemibold"
-                   TextColor="{StaticResource AccentGold}"
+                   TextColor="{StaticResource TextDark}"
                    HorizontalTextAlignment="Center"
                    VerticalOptions="Center" />
+
+            <!-- Icone power (retour) -->
+            <Button Grid.Column="2" Text="&#x23FB;"
+                    Clicked="OnBackClicked"
+                    BackgroundColor="Transparent"
+                    TextColor="{StaticResource DangerRed}"
+                    FontSize="20" WidthRequest="44" HeightRequest="44" />
         </Grid>
 
         <!-- Contenu -->
-        <VerticalStackLayout Grid.Row="1" Spacing="20"
-                             VerticalOptions="Center"
-                             Padding="32">
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="16" VerticalOptions="Center"
+                                 Padding="40,24">
 
-            <!-- Logo -->
-            <Image Source="kerphone_logo.png"
-                   HeightRequest="80" WidthRequest="80"
-                   HorizontalOptions="Center" />
+                <!-- Logo -->
+                <Image Source="kerphone_logo.png"
+                       HeightRequest="100" WidthRequest="100"
+                       Aspect="AspectFit"
+                       HorizontalOptions="Center" />
 
-            <!-- Titre -->
-            <Label Text="KerPhone"
-                   FontSize="28" FontFamily="OpenSansSemibold"
-                   TextColor="{StaticResource AccentGold}"
-                   HorizontalTextAlignment="Center" />
-
-            <Label Text="Version 1.0.0"
-                   FontSize="14"
-                   TextColor="{StaticResource TextMuted}"
-                   HorizontalTextAlignment="Center" />
-
-            <!-- Separateur -->
-            <BoxView HeightRequest="1"
-                     BackgroundColor="{StaticResource BorderColor}"
-                     Margin="20,4" />
-
-            <!-- Association -->
-            <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                <Label Text="Application developpee par l'association"
-                       FontSize="15"
-                       TextColor="{StaticResource TextSecondary}"
+                <!-- Titre app -->
+                <Label Text="KerPhone"
+                       FontSize="30" FontFamily="OpenSansSemibold"
+                       TextColor="{StaticResource TextDark}"
                        HorizontalTextAlignment="Center" />
 
-                <Label Text="KerBzh"
-                       FontSize="22" FontFamily="OpenSansSemibold"
-                       TextColor="{StaticResource AccentBlue}"
+                <Label Text="v1.1.0"
+                       FontSize="13"
+                       TextColor="{StaticResource TextMuted}"
                        HorizontalTextAlignment="Center"
-                       TextDecorations="Underline">
-                    <Label.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnKerBzhTapped" />
-                    </Label.GestureRecognizers>
+                       Margin="0,-8,0,0" />
+
+                <!-- Description -->
+                <Label Text="Softphone SIP simple et leger"
+                       FontSize="14"
+                       TextColor="{StaticResource TextMedium}"
+                       HorizontalTextAlignment="Center"
+                       Margin="0,8,0,0" />
+
+                <!-- Separateur -->
+                <BoxView HeightRequest="1"
+                         BackgroundColor="{StaticResource BorderLight}"
+                         Margin="20,8" />
+
+                <!-- Developpe en Bretagne -->
+                <Label FontSize="15"
+                       TextColor="{StaticResource TextMedium}"
+                       HorizontalTextAlignment="Center">
+                    <Label.FormattedText>
+                        <FormattedString>
+                            <Span Text="Developpe en Bretagne " />
+                            <Span Text="&#x2691;" FontSize="18" />
+                        </FormattedString>
+                    </Label.FormattedText>
                 </Label>
+
+                <!-- Association KerBzh -->
+                <VerticalStackLayout Spacing="4" HorizontalOptions="Center" Margin="0,8,0,0">
+                    <Label Text="Application developpee par l'association"
+                           FontSize="13" TextColor="{StaticResource TextMuted}"
+                           HorizontalTextAlignment="Center" />
+                    <Label Text="KerBzh"
+                           FontSize="20" FontFamily="OpenSansSemibold"
+                           TextColor="{StaticResource KerBlue}"
+                           HorizontalTextAlignment="Center"
+                           TextDecorations="Underline">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnKerBzhTapped" />
+                        </Label.GestureRecognizers>
+                    </Label>
+                </VerticalStackLayout>
+
+                <!-- Chef de projet -->
+                <VerticalStackLayout Spacing="2" HorizontalOptions="Center" Margin="0,8,0,0">
+                    <Label Text="Chef de projet" FontSize="12"
+                           TextColor="{StaticResource TextMuted}"
+                           HorizontalTextAlignment="Center" />
+                    <Label Text="Pierre LEGENDRE" FontSize="16"
+                           FontFamily="OpenSansSemibold"
+                           TextColor="{StaticResource TextDark}"
+                           HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+
+                <!-- Contact -->
+                <HorizontalStackLayout Spacing="6" HorizontalOptions="Center" Margin="0,8,0,0">
+                    <Label Text="&#x2709;" FontSize="16" TextColor="{StaticResource KerBlue}"
+                           VerticalOptions="Center" />
+                    <Label Text="contact@kerbzh.fr" FontSize="14"
+                           TextColor="{StaticResource KerBlue}"
+                           TextDecorations="Underline"
+                           VerticalOptions="Center">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnEmailTapped" />
+                        </Label.GestureRecognizers>
+                    </Label>
+                </HorizontalStackLayout>
+
             </VerticalStackLayout>
+        </ScrollView>
 
-            <!-- Separateur -->
-            <BoxView HeightRequest="1"
-                     BackgroundColor="{StaticResource BorderColor}"
-                     Margin="20,4" />
-
-            <!-- Chef de projet -->
-            <Label Text="Chef de projet"
-                   FontSize="13"
-                   TextColor="{StaticResource TextMuted}"
+        <!-- Pied: lien Support -->
+        <VerticalStackLayout Grid.Row="2" Spacing="4" Margin="0,0,0,20">
+            <Label Text="Support"
+                   FontSize="14" FontFamily="OpenSansSemibold"
+                   TextColor="{StaticResource KerBlue}"
+                   HorizontalTextAlignment="Center"
+                   TextDecorations="Underline">
+                <Label.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnEmailTapped" />
+                </Label.GestureRecognizers>
+            </Label>
+            <Label Text="&#x00A9; 2026 KerBzh"
+                   FontSize="10" TextColor="{StaticResource TextMuted}"
                    HorizontalTextAlignment="Center" />
-
-            <Label Text="Pierre LEGENDRE"
-                   FontSize="18" FontFamily="OpenSansSemibold"
-                   HorizontalTextAlignment="Center" />
-
-            <!-- Contact -->
-            <HorizontalStackLayout Spacing="8" HorizontalOptions="Center"
-                                   Margin="0,12,0,0">
-                <Label Text="&#x2709;" FontSize="18"
-                       TextColor="{StaticResource AccentBlue}"
-                       VerticalOptions="Center" />
-                <Label Text="contact@kerbzh.fr"
-                       FontSize="15"
-                       TextColor="{StaticResource AccentBlue}"
-                       TextDecorations="Underline"
-                       VerticalOptions="Center">
-                    <Label.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnEmailTapped" />
-                    </Label.GestureRecognizers>
-                </Label>
-            </HorizontalStackLayout>
-
         </VerticalStackLayout>
-
-        <!-- Pied de page -->
-        <Label Grid.Row="2"
-               Text="&#x00A9; 2026 KerBzh - Tous droits reserves"
-               FontSize="11"
-               TextColor="{StaticResource TextMuted}"
-               HorizontalTextAlignment="Center"
-               Margin="0,0,0,16" />
 
     </Grid>
 
