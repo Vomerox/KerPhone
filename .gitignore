@@ -38,3 +38,21 @@ native/pjproject/
 native/*.obj
 native/*.exp
 native/*.lib
+deps/
+
+# Temp scripts and build logs
+*.ps1
+*.bat
+*_err.txt
+*_out.txt
+dll_exports.txt
+
+# Publish artifacts (use GitHub releases)
+publish_android/
+
+# Old/unused assets
+src/SoftPhone/Assets/edrphone*
+src/SoftPhone/Assets/favicon_*
+src/SoftPhone/Assets/kerbzh_logo*
+src/SoftPhone/Assets/phone.ico
+src/SoftPhone/pjsip_wrapper.*
