@@ -72,7 +72,7 @@
                 <Setter Property="HeightRequest" Value="52" />
                 <Setter Property="FontSize" Value="17" />
                 <Style.Triggers>
-                    <Trigger Property="IsEnabled" Value="False">
+                    <Trigger TargetType="Button" Property="IsEnabled" Value="False">
                         <Setter Property="Opacity" Value="0.45" />
                     </Trigger>
                 </Style.Triggers>
