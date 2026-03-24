@@ -10,7 +10,6 @@
             <local:StringToBoolConverter x:Key="StringToBoolConverter" />
             <local:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <local:MuteTextConverter x:Key="MuteTextConverter" />
-            <local:HoldTextConverter x:Key="HoldTextConverter" />
 
             <!-- === THEME CLAIR KerPhone === -->
             <Color x:Key="BgWhite">#FFFFFF</Color>

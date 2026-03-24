@@ -21,9 +21,6 @@
 
 		<!-- Android 13 minimum (API 33) -->
 		<SupportedOSPlatformVersion>33.0</SupportedOSPlatformVersion>
-
-		<!-- Android SDK -->
-		<AndroidSdkDirectory>C:\Android\sdk</AndroidSdkDirectory>
 	</PropertyGroup>
 
 	<ItemGroup>

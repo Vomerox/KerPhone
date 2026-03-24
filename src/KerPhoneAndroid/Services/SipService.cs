@@ -24,6 +24,7 @@ public sealed class SipService
     private bool _isMuted;
     private bool _isOnHold;
     private bool _isCallSetup; // true pendant toute la duree de l'appel (setup + actif)
+    private SIPServerUserAgent? _pendingUas; // UAS en attente de reponse pour appel entrant
 
     private string _server = "";
     private string _username = "";
@@ -105,6 +106,10 @@ public sealed class SipService
 
     public void Unregister()
     {
+        // Raccrocher un appel en cours avant de se desenregistrer
+        if (_isCallSetup || (_userAgent?.IsCallActive ?? false))
+            Hangup();
+
         try { _regAgent?.Stop(); } catch { }
         _isRegistered = false;
         Cleanup();
@@ -269,6 +274,7 @@ public sealed class SipService
 
         _rtpSession = null;
         _userAgent = null;
+        _pendingUas = null;
         _isMuted = false;
         _isOnHold = false;
     }
@@ -561,17 +567,35 @@ public sealed class SipService
     {
         try
         {
-            if (_userAgent != null)
+            if (_userAgent != null && _pendingUas != null && _rtpSession != null)
             {
                 StartAudioPlayback();
-                StartMicCapture();
                 StartSilenceTimer();
-                MainThread.BeginInvokeOnMainThread(() =>
-                    CallStateChanged?.Invoke("En ligne"));
+
+                // Envoyer le 200 OK au correspondant via la session RTP
+                var answered = await _userAgent.Answer(_pendingUas, _rtpSession);
+                _pendingUas = null;
+
+                if (answered)
+                {
+                    StartMicCapture();
+                    MainThread.BeginInvokeOnMainThread(() =>
+                        CallStateChanged?.Invoke("En ligne"));
+                }
+                else
+                {
+                    StopAudio();
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        CallStateChanged?.Invoke("Échec");
+                        ErrorOccurred?.Invoke("Impossible de répondre à l'appel.");
+                    });
+                }
             }
         }
         catch (Exception ex)
         {
+            StopAudio();
             MainThread.BeginInvokeOnMainThread(() =>
                 ErrorOccurred?.Invoke($"Erreur réponse : {ex.Message}"));
         }
@@ -618,7 +642,7 @@ public sealed class SipService
             _rtpSession.OnRtpPacketReceived += OnRtpPacketReceived;
             _rtpSession.OnTimeout += (mediaType) => { };
 
-            var uas = _userAgent.AcceptCall(sipRequest);
+            _pendingUas = _userAgent.AcceptCall(sipRequest);
 
             MainThread.BeginInvokeOnMainThread(() =>
                 IncomingCall?.Invoke(from));

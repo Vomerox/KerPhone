@@ -81,19 +81,7 @@ public class InvertedBoolConverter : IValueConverter
 public class MuteTextConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
-        => value is true ? "&#x1F50A;" : "&#x1F507;";
-
-    public object ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
-        => throw new NotImplementedException();
-}
-
-/// <summary>
-/// Convertisseur pour le texte du bouton Attente.
-/// </summary>
-public class HoldTextConverter : IValueConverter
-{
-    public object Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
-        => value is true ? "Reprendre" : "Attente";
+        => value is true ? "\U0001F507 Muet" : "\U0001F50A Micro";
 
     public object ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
         => throw new NotImplementedException();
