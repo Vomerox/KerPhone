@@ -180,3 +180,67 @@ public class MicStatusTextConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
         => throw new NotImplementedException();
 }
+
+/// <summary>
+/// Convertisseur pour le texte du bouton haut-parleur.
+/// </summary>
+public class SpeakerTextConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
+        => value is true ? "\U0001F508 HP activé" : "\U0001F50A HP";
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
+        => throw new NotImplementedException();
+}
+
+/// <summary>
+/// Behavior pour detecter un appui long sur le 0 (inserer "+").
+/// </summary>
+public class LongPressBehavior : Behavior<Border>
+{
+    public static readonly BindableProperty CommandProperty =
+        BindableProperty.Create(nameof(Command), typeof(System.Windows.Input.ICommand), typeof(LongPressBehavior));
+
+    public System.Windows.Input.ICommand? Command
+    {
+        get => (System.Windows.Input.ICommand?)GetValue(CommandProperty);
+        set => SetValue(CommandProperty, value);
+    }
+
+    private Border? _border;
+    private CancellationTokenSource? _cts;
+
+    protected override void OnAttachedTo(Border bindable)
+    {
+        base.OnAttachedTo(bindable);
+        _border = bindable;
+
+        var pointerGesture = new PointerGestureRecognizer();
+        pointerGesture.PointerPressed += OnPointerPressed;
+        pointerGesture.PointerReleased += OnPointerReleased;
+        bindable.GestureRecognizers.Add(pointerGesture);
+    }
+
+    private async void OnPointerPressed(object? sender, PointerEventArgs e)
+    {
+        _cts?.Cancel();
+        _cts = new CancellationTokenSource();
+        var token = _cts.Token;
+
+        try
+        {
+            await Task.Delay(600, token);
+            if (!token.IsCancellationRequested)
+            {
+                HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
+                Command?.Execute(null);
+            }
+        }
+        catch (TaskCanceledException) { }
+    }
+
+    private void OnPointerReleased(object? sender, PointerEventArgs e)
+    {
+        _cts?.Cancel();
+    }
+}

@@ -4,6 +4,7 @@ using SIPSorcery.SIP.App;
 using SIPSorcery.Net;
 using SIPSorceryMedia.Abstractions;
 using Android.Media;
+using Android.OS;
 using Encoding = Android.Media.Encoding;
 
 namespace KerPhoneAndroid.Services;
@@ -37,6 +38,13 @@ public sealed class SipService
     private bool _isRecording;
     private Thread? _recordThread;
     private readonly byte[] _rtpPcmBuffer = new byte[1280]; // 640 samples PCM16 max (20ms @ 8kHz * 2 bytes)
+    private bool _isSpeakerOn;
+    private AudioManager? _audioManager;
+    private AudioFocusRequestClass? _audioFocusRequest;
+
+    // Sonnerie/vibration appel entrant
+    private Android.Media.Ringtone? _ringtone;
+    private Vibrator? _vibrator;
 
     /* --- Evenements --- */
     public event Action<bool, string>? RegistrationStateChanged;
@@ -290,6 +298,7 @@ public sealed class SipService
         try
         {
             StopAudioPlayback();
+            RequestAudioFocus();
 
             int sampleRate = 8000;
             var channelConfig = ChannelOut.Mono;
@@ -468,6 +477,8 @@ public sealed class SipService
         StopSilenceTimer();
         StopMicCapture();
         StopAudioPlayback();
+        StopIncomingRingtone();
+        AbandonAudioFocus();
     }
 
     /// <summary>
@@ -542,6 +553,135 @@ public sealed class SipService
     }
 
     public void SetMute(bool mute) => _isMuted = mute;
+
+    /// <summary>
+    /// Active/desactive le haut-parleur.
+    /// </summary>
+    public void SetSpeaker(bool on)
+    {
+        _isSpeakerOn = on;
+        try
+        {
+            var mgr = GetAudioManager();
+            if (mgr != null)
+            {
+                mgr.SpeakerphoneOn = on;
+                mgr.Mode = on ? Mode.Normal : Mode.InCommunication;
+            }
+        }
+        catch { }
+    }
+
+    public bool IsSpeakerOn => _isSpeakerOn;
+
+    /// <summary>
+    /// Demande le focus audio Android pour les appels VoIP.
+    /// </summary>
+    private void RequestAudioFocus()
+    {
+        try
+        {
+            var mgr = GetAudioManager();
+            if (mgr == null) return;
+
+            mgr.Mode = Mode.InCommunication;
+
+            if (OperatingSystem.IsAndroidVersionAtLeast(26))
+            {
+                _audioFocusRequest = new AudioFocusRequestClass.Builder(AudioFocus.GainTransient)!
+                    .SetAudioAttributes(new AudioAttributes.Builder()
+                        .SetUsage(AudioUsageKind.VoiceCommunication)!
+                        .SetContentType(AudioContentType.Speech)!
+                        .Build()!)!
+                    .Build();
+                mgr.RequestAudioFocus(_audioFocusRequest);
+            }
+        }
+        catch { }
+    }
+
+    /// <summary>
+    /// Libere le focus audio Android.
+    /// </summary>
+    private void AbandonAudioFocus()
+    {
+        try
+        {
+            var mgr = GetAudioManager();
+            if (mgr == null) return;
+
+            if (_audioFocusRequest != null && OperatingSystem.IsAndroidVersionAtLeast(26))
+            {
+                mgr.AbandonAudioFocusRequest(_audioFocusRequest);
+                _audioFocusRequest = null;
+            }
+
+            mgr.Mode = Mode.Normal;
+            mgr.SpeakerphoneOn = false;
+            _isSpeakerOn = false;
+        }
+        catch { }
+    }
+
+    private AudioManager? GetAudioManager()
+    {
+        if (_audioManager == null)
+        {
+            _audioManager = Android.App.Application.Context.GetSystemService(Android.Content.Context.AudioService) as AudioManager;
+        }
+        return _audioManager;
+    }
+
+    /// <summary>
+    /// Demarre la sonnerie et la vibration pour un appel entrant.
+    /// </summary>
+    public void StartIncomingRingtone()
+    {
+        try
+        {
+            // Vibration
+            var vibrator = (Vibrator?)Android.App.Application.Context.GetSystemService(Android.Content.Context.VibratorService);
+            if (vibrator != null && vibrator.HasVibrator)
+            {
+                _vibrator = vibrator;
+                if (OperatingSystem.IsAndroidVersionAtLeast(26))
+                {
+                    // Vibration en boucle : 0ms pause, 500ms vibre, 500ms pause, 500ms vibre...
+                    var effect = VibrationEffect.CreateWaveform(new long[] { 0, 500, 500, 500 }, 0);
+                    _vibrator.Vibrate(effect);
+                }
+            }
+
+            // Sonnerie par defaut
+            var ringtoneUri = Android.Media.RingtoneManager.GetDefaultUri(RingtoneType.Ringtone);
+            if (ringtoneUri != null)
+            {
+                _ringtone = Android.Media.RingtoneManager.GetRingtone(Android.App.Application.Context, ringtoneUri);
+                _ringtone?.Play();
+            }
+        }
+        catch { }
+    }
+
+    /// <summary>
+    /// Arrete la sonnerie et la vibration.
+    /// </summary>
+    public void StopIncomingRingtone()
+    {
+        try
+        {
+            _vibrator?.Cancel();
+            _vibrator = null;
+        }
+        catch { }
+        try
+        {
+            if (_ringtone?.IsPlaying == true)
+                _ringtone.Stop();
+            _ringtone = null;
+        }
+        catch { }
+    }
 
     public async Task SendDtmfAsync(string digits)
     {

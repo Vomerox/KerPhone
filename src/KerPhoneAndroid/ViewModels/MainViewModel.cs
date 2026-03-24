@@ -26,8 +26,10 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool _isInCall;
     [ObservableProperty] private bool _isIncomingCall;
     [ObservableProperty] private bool _isMuted;
+    [ObservableProperty] private bool _isSpeakerOn;
     [ObservableProperty] private bool _isConnecting;
     [ObservableProperty] private string _dialNumber = "";
+    [ObservableProperty] private bool _showDtmfPad;
     [ObservableProperty] private string _callStatus = "";
     [ObservableProperty] private string _callDuration = "00:00";
     [ObservableProperty] private string _remoteParty = "";
@@ -39,6 +41,16 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool _showDialPad;
     [ObservableProperty] private bool _showActiveCall;
     [ObservableProperty] private bool _showIncomingCall;
+
+    /// <summary>
+    /// Numero formate pour l'affichage (ex: "06 12 34 56 78").
+    /// </summary>
+    public string FormattedDialNumber => FormatPhoneNumber(DialNumber);
+
+    partial void OnDialNumberChanged(string value)
+    {
+        OnPropertyChanged(nameof(FormattedDialNumber));
+    }
 
     /* --- Historique --- */
     public ObservableCollection<CallHistoryEntry> CallHistory { get; } = new();
@@ -125,6 +137,24 @@ public partial class MainViewModel : ObservableObject
         {
             StatusMessage = "Veuillez renseigner le serveur et l'identifiant.";
             return;
+        }
+
+        // Validation du serveur (nom de domaine ou IP)
+        var serverTrimmed = SipServer.Trim();
+        if (serverTrimmed.Contains(' ') || serverTrimmed.Contains("://"))
+        {
+            StatusMessage = "Adresse serveur invalide (ex: sip.exemple.fr).";
+            return;
+        }
+
+        // Validation du port
+        if (!string.IsNullOrWhiteSpace(SipPort))
+        {
+            if (!int.TryParse(SipPort, out var portVal) || portVal < 1 || portVal > 65535)
+            {
+                StatusMessage = "Port invalide (1 - 65535).";
+                return;
+            }
         }
 
         _isUnregistering = false;
@@ -231,6 +261,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void AnswerIncoming()
     {
+        _sip.StopIncomingRingtone();
         _ = _sip.AnswerCallAsync();
         IsIncomingCall = false;
         IsInCall = true;
@@ -243,6 +274,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void RejectIncoming()
     {
+        _sip.StopIncomingRingtone();
         _sip.Hangup();
         IsIncomingCall = false;
         ResetCallState();
@@ -254,6 +286,31 @@ public partial class MainViewModel : ObservableObject
         if (!IsInCall) return;
         IsMuted = !IsMuted;
         _sip.SetMute(IsMuted);
+    }
+
+    [RelayCommand]
+    private void ToggleSpeaker()
+    {
+        if (!IsInCall) return;
+        IsSpeakerOn = !IsSpeakerOn;
+        _sip.SetSpeaker(IsSpeakerOn);
+    }
+
+    [RelayCommand]
+    private void ToggleDtmfPad()
+    {
+        ShowDtmfPad = !ShowDtmfPad;
+    }
+
+    [RelayCommand]
+    private void LongPressZero()
+    {
+        if (IsInCall)
+        {
+            _ = _sip.SendDtmfAsync("+");
+            return;
+        }
+        DialNumber += "+";
     }
 
     [RelayCommand]
@@ -338,6 +395,7 @@ public partial class MainViewModel : ObservableObject
         IsIncomingCall = true;
         CallStatus = "Appel entrant...";
         AddHistory(from, "Entrant");
+        _sip.StartIncomingRingtone();
         UpdatePanelVisibility();
     }
 
@@ -382,11 +440,40 @@ public partial class MainViewModel : ObservableObject
         IsIncomingCall = false;
         IsConnecting = false;
         IsMuted = false;
+        IsSpeakerOn = false;
+        ShowDtmfPad = false;
         CallStatus = "";
         CallDuration = "00:00";
         RemoteParty = "";
         IncomingCallerInfo = "";
         UpdatePanelVisibility();
+    }
+
+    /// <summary>
+    /// Formate un numero de telephone pour l'affichage (ex: 0612345678 → 06 12 34 56 78).
+    /// </summary>
+    private static string FormatPhoneNumber(string number)
+    {
+        if (string.IsNullOrEmpty(number)) return "";
+
+        // Retirer espaces existants pour reformater
+        var digits = number.Replace(" ", "");
+
+        // Format francais 10 chiffres: XX XX XX XX XX
+        if (digits.Length == 10 && digits.All(char.IsDigit) && digits.StartsWith('0'))
+        {
+            return string.Join(" ",
+                digits[..2], digits[2..4], digits[4..6], digits[6..8], digits[8..10]);
+        }
+
+        // Format international +33: +33 X XX XX XX XX
+        if (digits.StartsWith("+33") && digits.Length == 12)
+        {
+            return $"+33 {digits[3]} {digits[4..6]} {digits[6..8]} {digits[8..10]} {digits[10..12]}";
+        }
+
+        // Pas de formatage special pour les autres numeros
+        return number;
     }
 
     private void AddHistory(string number, string direction)

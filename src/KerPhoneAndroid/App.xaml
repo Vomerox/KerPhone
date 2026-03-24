@@ -11,6 +11,7 @@
             <local:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <local:MuteTextConverter x:Key="MuteTextConverter" />
             <local:MicStatusTextConverter x:Key="MicStatusTextConverter" />
+            <local:SpeakerTextConverter x:Key="SpeakerTextConverter" />
 
             <!-- === THEME CLAIR KerPhone === -->
             <Color x:Key="BgWhite">#FFFFFF</Color>
