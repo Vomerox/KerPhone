@@ -23,7 +23,6 @@ jobs:
         id: version
         run: |
           REF="${{ github.ref_name }}"
-          # release/v1.3.1 → v1.3.1 ; v1.3.1 → v1.3.1
           VERSION="${REF#release/}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Version : $VERSION"
@@ -39,18 +38,22 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Install MAUI Android workload
-        run: dotnet workload install maui-android
+      - name: Install Android + MAUI workloads
+        run: dotnet workload install android maui-android
 
-      - name: Restore dependencies
-        run: dotnet restore src/KerPhoneAndroid/KerPhoneAndroid.csproj
+      - name: Restore workloads from project
+        run: dotnet workload restore src/KerPhoneAndroid/KerPhoneAndroid.csproj
+
+      - name: Restore NuGet dependencies
+        run: dotnet restore src/KerPhoneAndroid/KerPhoneAndroid.csproj --verbosity normal
 
       - name: Build APK
         run: |
           dotnet publish src/KerPhoneAndroid/KerPhoneAndroid.csproj \
             -f net8.0-android \
             -c Release \
-            --no-restore
+            --no-restore \
+            --verbosity normal
 
       - name: Locate APK
         id: apk
