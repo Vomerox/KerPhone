@@ -38,14 +38,28 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Install Android + MAUI workloads
-        run: dotnet workload install android maui-android
+      - name: Show .NET SDK version
+        run: dotnet --version && dotnet --list-sdks
 
-      - name: Restore workloads from project
-        run: dotnet workload restore src/KerPhoneAndroid/KerPhoneAndroid.csproj
+      - name: Install MAUI Android workload
+        run: |
+          dotnet workload install maui-android \
+            --from-rollback-file https://aka.ms/dotnet/8/android.json \
+            --skip-sign-check \
+            --verbosity detailed
+
+      - name: Show installed workloads
+        run: dotnet workload list
 
       - name: Restore NuGet dependencies
-        run: dotnet restore src/KerPhoneAndroid/KerPhoneAndroid.csproj --verbosity normal
+        run: |
+          dotnet restore src/KerPhoneAndroid/KerPhoneAndroid.csproj \
+            --verbosity normal \
+            2>&1 | tee /tmp/restore.log
+          EXIT=${PIPESTATUS[0]}
+          echo "## dotnet restore output" >> $GITHUB_STEP_SUMMARY
+          cat /tmp/restore.log >> $GITHUB_STEP_SUMMARY
+          exit $EXIT
 
       - name: Build APK
         run: |
