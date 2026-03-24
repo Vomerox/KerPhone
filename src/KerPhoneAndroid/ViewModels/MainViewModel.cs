@@ -65,7 +65,10 @@ public partial class MainViewModel : ObservableObject
         _callTimer.Interval = TimeSpan.FromSeconds(1);
         _callTimer.Tick += (_, _) =>
         {
-            CallDuration = (DateTime.Now - _callStartTime).ToString(@"mm\:ss");
+            var elapsed = DateTime.Now - _callStartTime;
+            CallDuration = elapsed.TotalHours >= 1
+                ? elapsed.ToString(@"hh\:mm\:ss")
+                : elapsed.ToString(@"mm\:ss");
         };
     }
 

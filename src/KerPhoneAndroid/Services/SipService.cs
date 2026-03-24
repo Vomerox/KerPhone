@@ -36,6 +36,7 @@ public sealed class SipService
     private AudioRecord? _audioRecord;
     private bool _isRecording;
     private Thread? _recordThread;
+    private readonly byte[] _rtpPcmBuffer = new byte[1280]; // 640 samples PCM16 max (20ms @ 8kHz * 2 bytes)
 
     /* --- Evenements --- */
     public event Action<bool, string>? RegistrationStateChanged;
@@ -441,23 +442,20 @@ public sealed class SipService
         {
             var payload = rtpPacket.Payload;
             int payloadType = rtpPacket.Header.PayloadType;
+            int count = Math.Min(payload.Length, _rtpPcmBuffer.Length / 2);
 
-            // Decoder mu-law (PT 0) ou a-law (PT 8) -> PCM16
-            var pcm = new byte[payload.Length * 2];
-            for (int i = 0; i < payload.Length; i++)
+            // Decoder mu-law (PT 0) ou a-law (PT 8) -> PCM16 dans le buffer reutilise
+            for (int i = 0; i < count; i++)
             {
-                short sample;
-                if (payloadType == 8) // PCMA (a-law)
-                    sample = ALawToLinear(payload[i]);
-                else // PCMU (mu-law) par defaut
-                    sample = MuLawToLinear(payload[i]);
-
-                pcm[i * 2] = (byte)(sample & 0xFF);
-                pcm[i * 2 + 1] = (byte)((sample >> 8) & 0xFF);
+                short sample = payloadType == 8
+                    ? ALawToLinear(payload[i])
+                    : MuLawToLinear(payload[i]);
+                _rtpPcmBuffer[i * 2]     = (byte)(sample & 0xFF);
+                _rtpPcmBuffer[i * 2 + 1] = (byte)((sample >> 8) & 0xFF);
             }
 
             if (_audioTrack?.PlayState == PlayState.Playing)
-                _audioTrack.Write(pcm, 0, pcm.Length);
+                _audioTrack.Write(_rtpPcmBuffer, 0, count * 2);
         }
         catch { }
     }

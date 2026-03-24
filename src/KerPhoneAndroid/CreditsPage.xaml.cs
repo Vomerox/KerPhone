@@ -5,6 +5,8 @@ public partial class CreditsPage : ContentPage
     public CreditsPage()
     {
         InitializeComponent();
+        // H. Version lue depuis AppInfo pour rester synchronisee avec le .csproj
+        VersionLabel.Text = $"v{AppInfo.VersionString}";
     }
 
     private async void OnBackClicked(object? sender, EventArgs e)
