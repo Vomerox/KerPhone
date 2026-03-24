@@ -76,6 +76,37 @@ public class InvertedBoolConverter : IValueConverter
 }
 
 /// <summary>
+/// Behavior qui anime une touche du clavier en retour visuel au toucher.
+/// </summary>
+public class PressAnimationBehavior : Behavior<Border>
+{
+    private Border? _border;
+
+    protected override void OnAttachedTo(Border bindable)
+    {
+        base.OnAttachedTo(bindable);
+        _border = bindable;
+        foreach (var tap in bindable.GestureRecognizers.OfType<TapGestureRecognizer>())
+            tap.Tapped += OnTapped;
+    }
+
+    protected override void OnDetachingFrom(Border bindable)
+    {
+        base.OnDetachingFrom(bindable);
+        foreach (var tap in bindable.GestureRecognizers.OfType<TapGestureRecognizer>())
+            tap.Tapped -= OnTapped;
+        _border = null;
+    }
+
+    private async void OnTapped(object? sender, TappedEventArgs e)
+    {
+        if (_border == null) return;
+        await _border.ScaleTo(0.88, 60, Easing.CubicOut);
+        await _border.ScaleTo(1.0, 120, Easing.SpringOut);
+    }
+}
+
+/// <summary>
 /// Convertisseur pour le texte du bouton Muet.
 /// </summary>
 public class MuteTextConverter : IValueConverter

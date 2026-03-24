@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:KerPhoneAndroid.ViewModels"
+             xmlns:local="clr-namespace:KerPhoneAndroid"
              x:Class="KerPhoneAndroid.MainPage"
              x:DataType="vm:MainViewModel"
              Shell.NavBarIsVisible="False"
@@ -200,6 +201,9 @@
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding DialPadPressCommand}" CommandParameter="1" />
                             </Border.GestureRecognizers>
+                            <Border.Behaviors>
+                                <local:PressAnimationBehavior />
+                            </Border.Behaviors>
                             <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="0">
                                 <Label Text="1" FontSize="26" FontFamily="OpenSansSemibold" TextColor="{StaticResource DialText}" HorizontalTextAlignment="Center" />
                                 <Label Text=" " FontSize="9" TextColor="{StaticResource DialSub}" HorizontalTextAlignment="Center" />
@@ -210,6 +214,9 @@
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding DialPadPressCommand}" CommandParameter="2" />
                             </Border.GestureRecognizers>
+                            <Border.Behaviors>
+                                <local:PressAnimationBehavior />
+                            </Border.Behaviors>
                             <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="0">
                                 <Label Text="2" FontSize="26" FontFamily="OpenSansSemibold" TextColor="{StaticResource DialText}" HorizontalTextAlignment="Center" />
                                 <Label Text="ABC" FontSize="9" TextColor="{StaticResource DialSub}" HorizontalTextAlignment="Center" />
@@ -220,6 +227,9 @@
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding DialPadPressCommand}" CommandParameter="3" />
                             </Border.GestureRecognizers>
+                            <Border.Behaviors>
+                                <local:PressAnimationBehavior />
+                            </Border.Behaviors>
                             <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="0">
                                 <Label Text="3" FontSize="26" FontFamily="OpenSansSemibold" TextColor="{StaticResource DialText}" HorizontalTextAlignment="Center" />
                                 <Label Text="DEF" FontSize="9" TextColor="{StaticResource DialSub}" HorizontalTextAlignment="Center" />
@@ -232,6 +242,9 @@
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding DialPadPressCommand}" CommandParameter="4" />
                             </Border.GestureRecognizers>
+                            <Border.Behaviors>
+                                <local:PressAnimationBehavior />
+                            </Border.Behaviors>
                             <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="0">
                                 <Label Text="4" FontSize="26" FontFamily="OpenSansSemibold" TextColor="{StaticResource DialText}" HorizontalTextAlignment="Center" />
                                 <Label Text="GHI" FontSize="9" TextColor="{StaticResource DialSub}" HorizontalTextAlignment="Center" />
@@ -242,6 +255,9 @@
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding DialPadPressCommand}" CommandParameter="5" />
                             </Border.GestureRecognizers>
+                            <Border.Behaviors>
+                                <local:PressAnimationBehavior />
+                            </Border.Behaviors>
                             <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="0">
                                 <Label Text="5" FontSize="26" FontFamily="OpenSansSemibold" TextColor="{StaticResource DialText}" HorizontalTextAlignment="Center" />
                                 <Label Text="JKL" FontSize="9" TextColor="{StaticResource DialSub}" HorizontalTextAlignment="Center" />
@@ -252,6 +268,9 @@
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding DialPadPressCommand}" CommandParameter="6" />
                             </Border.GestureRecognizers>
+                            <Border.Behaviors>
+                                <local:PressAnimationBehavior />
+                            </Border.Behaviors>
                             <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="0">
                                 <Label Text="6" FontSize="26" FontFamily="OpenSansSemibold" TextColor="{StaticResource DialText}" HorizontalTextAlignment="Center" />
                                 <Label Text="MNO" FontSize="9" TextColor="{StaticResource DialSub}" HorizontalTextAlignment="Center" />
@@ -264,6 +283,9 @@
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding DialPadPressCommand}" CommandParameter="7" />
                             </Border.GestureRecognizers>
+                            <Border.Behaviors>
+                                <local:PressAnimationBehavior />
+                            </Border.Behaviors>
                             <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="0">
                                 <Label Text="7" FontSize="26" FontFamily="OpenSansSemibold" TextColor="{StaticResource DialText}" HorizontalTextAlignment="Center" />
                                 <Label Text="PQRS" FontSize="9" TextColor="{StaticResource DialSub}" HorizontalTextAlignment="Center" />
@@ -274,6 +296,9 @@
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding DialPadPressCommand}" CommandParameter="8" />
                             </Border.GestureRecognizers>
+                            <Border.Behaviors>
+                                <local:PressAnimationBehavior />
+                            </Border.Behaviors>
                             <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="0">
                                 <Label Text="8" FontSize="26" FontFamily="OpenSansSemibold" TextColor="{StaticResource DialText}" HorizontalTextAlignment="Center" />
                                 <Label Text="TUV" FontSize="9" TextColor="{StaticResource DialSub}" HorizontalTextAlignment="Center" />
@@ -284,6 +309,9 @@
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding DialPadPressCommand}" CommandParameter="9" />
                             </Border.GestureRecognizers>
+                            <Border.Behaviors>
+                                <local:PressAnimationBehavior />
+                            </Border.Behaviors>
                             <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="0">
                                 <Label Text="9" FontSize="26" FontFamily="OpenSansSemibold" TextColor="{StaticResource DialText}" HorizontalTextAlignment="Center" />
                                 <Label Text="WXYZ" FontSize="9" TextColor="{StaticResource DialSub}" HorizontalTextAlignment="Center" />
@@ -296,6 +324,9 @@
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding DialPadPressCommand}" CommandParameter="*" />
                             </Border.GestureRecognizers>
+                            <Border.Behaviors>
+                                <local:PressAnimationBehavior />
+                            </Border.Behaviors>
                             <Label Text="*" FontSize="30" FontFamily="OpenSansSemibold" TextColor="{StaticResource DialText}"
                                    HorizontalTextAlignment="Center" VerticalTextAlignment="Center"
                                    HorizontalOptions="Center" VerticalOptions="Center" />
@@ -305,6 +336,9 @@
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding DialPadPressCommand}" CommandParameter="0" />
                             </Border.GestureRecognizers>
+                            <Border.Behaviors>
+                                <local:PressAnimationBehavior />
+                            </Border.Behaviors>
                             <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="0">
                                 <Label Text="0" FontSize="26" FontFamily="OpenSansSemibold" TextColor="{StaticResource DialText}" HorizontalTextAlignment="Center" />
                                 <Label Text="+" FontSize="9" TextColor="{StaticResource DialSub}" HorizontalTextAlignment="Center" />
@@ -315,6 +349,9 @@
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding DialPadPressCommand}" CommandParameter="#" />
                             </Border.GestureRecognizers>
+                            <Border.Behaviors>
+                                <local:PressAnimationBehavior />
+                            </Border.Behaviors>
                             <Label Text="#" FontSize="26" FontFamily="OpenSansSemibold" TextColor="{StaticResource DialText}"
                                    HorizontalTextAlignment="Center" VerticalTextAlignment="Center"
                                    HorizontalOptions="Center" VerticalOptions="Center" />
