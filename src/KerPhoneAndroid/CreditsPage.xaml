@@ -46,7 +46,7 @@
                        TextColor="{StaticResource TextDark}"
                        HorizontalTextAlignment="Center" />
 
-                <Label Text="v1.2.0"
+                <Label x:Name="VersionLabel"
                        FontSize="13"
                        TextColor="{StaticResource TextMuted}"
                        HorizontalTextAlignment="Center"

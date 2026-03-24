@@ -24,6 +24,7 @@ public sealed class SipService
     private bool _isMuted;
     private bool _isOnHold;
     private bool _isCallSetup; // true pendant toute la duree de l'appel (setup + actif)
+    private SIPServerUserAgent? _pendingUas; // UAS en attente de reponse pour appel entrant
 
     private string _server = "";
     private string _username = "";
@@ -35,6 +36,7 @@ public sealed class SipService
     private AudioRecord? _audioRecord;
     private bool _isRecording;
     private Thread? _recordThread;
+    private readonly byte[] _rtpPcmBuffer = new byte[1280]; // 640 samples PCM16 max (20ms @ 8kHz * 2 bytes)
 
     /* --- Evenements --- */
     public event Action<bool, string>? RegistrationStateChanged;
@@ -105,6 +107,10 @@ public sealed class SipService
 
     public void Unregister()
     {
+        // Raccrocher un appel en cours avant de se desenregistrer
+        if (_isCallSetup || (_userAgent?.IsCallActive ?? false))
+            Hangup();
+
         try { _regAgent?.Stop(); } catch { }
         _isRegistered = false;
         Cleanup();
@@ -269,6 +275,7 @@ public sealed class SipService
 
         _rtpSession = null;
         _userAgent = null;
+        _pendingUas = null;
         _isMuted = false;
         _isOnHold = false;
     }
@@ -435,23 +442,20 @@ public sealed class SipService
         {
             var payload = rtpPacket.Payload;
             int payloadType = rtpPacket.Header.PayloadType;
+            int count = Math.Min(payload.Length, _rtpPcmBuffer.Length / 2);
 
-            // Decoder mu-law (PT 0) ou a-law (PT 8) -> PCM16
-            var pcm = new byte[payload.Length * 2];
-            for (int i = 0; i < payload.Length; i++)
+            // Decoder mu-law (PT 0) ou a-law (PT 8) -> PCM16 dans le buffer reutilise
+            for (int i = 0; i < count; i++)
             {
-                short sample;
-                if (payloadType == 8) // PCMA (a-law)
-                    sample = ALawToLinear(payload[i]);
-                else // PCMU (mu-law) par defaut
-                    sample = MuLawToLinear(payload[i]);
-
-                pcm[i * 2] = (byte)(sample & 0xFF);
-                pcm[i * 2 + 1] = (byte)((sample >> 8) & 0xFF);
+                short sample = payloadType == 8
+                    ? ALawToLinear(payload[i])
+                    : MuLawToLinear(payload[i]);
+                _rtpPcmBuffer[i * 2]     = (byte)(sample & 0xFF);
+                _rtpPcmBuffer[i * 2 + 1] = (byte)((sample >> 8) & 0xFF);
             }
 
             if (_audioTrack?.PlayState == PlayState.Playing)
-                _audioTrack.Write(pcm, 0, pcm.Length);
+                _audioTrack.Write(_rtpPcmBuffer, 0, count * 2);
         }
         catch { }
     }
@@ -561,17 +565,35 @@ public sealed class SipService
     {
         try
         {
-            if (_userAgent != null)
+            if (_userAgent != null && _pendingUas != null && _rtpSession != null)
             {
                 StartAudioPlayback();
-                StartMicCapture();
                 StartSilenceTimer();
-                MainThread.BeginInvokeOnMainThread(() =>
-                    CallStateChanged?.Invoke("En ligne"));
+
+                // Envoyer le 200 OK au correspondant via la session RTP
+                var answered = await _userAgent.Answer(_pendingUas, _rtpSession);
+                _pendingUas = null;
+
+                if (answered)
+                {
+                    StartMicCapture();
+                    MainThread.BeginInvokeOnMainThread(() =>
+                        CallStateChanged?.Invoke("En ligne"));
+                }
+                else
+                {
+                    StopAudio();
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        CallStateChanged?.Invoke("Échec");
+                        ErrorOccurred?.Invoke("Impossible de répondre à l'appel.");
+                    });
+                }
             }
         }
         catch (Exception ex)
         {
+            StopAudio();
             MainThread.BeginInvokeOnMainThread(() =>
                 ErrorOccurred?.Invoke($"Erreur réponse : {ex.Message}"));
         }
@@ -618,7 +640,7 @@ public sealed class SipService
             _rtpSession.OnRtpPacketReceived += OnRtpPacketReceived;
             _rtpSession.OnTimeout += (mediaType) => { };
 
-            var uas = _userAgent.AcceptCall(sipRequest);
+            _pendingUas = _userAgent.AcceptCall(sipRequest);
 
             MainThread.BeginInvokeOnMainThread(() =>
                 IncomingCall?.Invoke(from));

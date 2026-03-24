@@ -25,7 +25,6 @@ public partial class MainViewModel : ObservableObject
     private bool _isUnregistering;
     [ObservableProperty] private bool _isInCall;
     [ObservableProperty] private bool _isIncomingCall;
-    [ObservableProperty] private bool _isOnHold;
     [ObservableProperty] private bool _isMuted;
     [ObservableProperty] private bool _isConnecting;
     [ObservableProperty] private string _dialNumber = "";
@@ -66,7 +65,10 @@ public partial class MainViewModel : ObservableObject
         _callTimer.Interval = TimeSpan.FromSeconds(1);
         _callTimer.Tick += (_, _) =>
         {
-            CallDuration = (DateTime.Now - _callStartTime).ToString(@"mm\:ss");
+            var elapsed = DateTime.Now - _callStartTime;
+            CallDuration = elapsed.TotalHours >= 1
+                ? elapsed.ToString(@"hh\:mm\:ss")
+                : elapsed.ToString(@"mm\:ss");
         };
     }
 
@@ -147,6 +149,13 @@ public partial class MainViewModel : ObservableObject
     private void Disconnect()
     {
         _isUnregistering = true;
+
+        // Raccrocher un appel en cours avant de se deconnecter
+        if (IsInCall || IsIncomingCall)
+        {
+            _callTimer?.Stop();
+            ResetCallState();
+        }
 
         IsRegistered = false;
         RegistrationStatus = "Déconnecté";
@@ -240,15 +249,6 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void ToggleHold()
-    {
-        if (!IsInCall) return;
-        IsOnHold = !IsOnHold;
-        _sip.SetHold(IsOnHold);
-        CallStatus = IsOnHold ? "En attente" : "En ligne";
-    }
-
-    [RelayCommand]
     private void ToggleMute()
     {
         if (!IsInCall) return;
@@ -263,7 +263,9 @@ public partial class MainViewModel : ObservableObject
 
         if (IsInCall)
         {
+            // En appel : envoyer uniquement le DTMF, sans modifier le numero affiche
             _ = _sip.SendDtmfAsync(digit);
+            return;
         }
 
         DialNumber += digit;
@@ -379,7 +381,6 @@ public partial class MainViewModel : ObservableObject
         IsInCall = false;
         IsIncomingCall = false;
         IsConnecting = false;
-        IsOnHold = false;
         IsMuted = false;
         CallStatus = "";
         CallDuration = "00:00";

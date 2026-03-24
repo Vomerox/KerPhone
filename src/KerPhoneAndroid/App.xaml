@@ -10,7 +10,7 @@
             <local:StringToBoolConverter x:Key="StringToBoolConverter" />
             <local:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <local:MuteTextConverter x:Key="MuteTextConverter" />
-            <local:HoldTextConverter x:Key="HoldTextConverter" />
+            <local:MicStatusTextConverter x:Key="MicStatusTextConverter" />
 
             <!-- === THEME CLAIR KerPhone === -->
             <Color x:Key="BgWhite">#FFFFFF</Color>
@@ -71,6 +71,11 @@
                 <Setter Property="CornerRadius" Value="12" />
                 <Setter Property="HeightRequest" Value="52" />
                 <Setter Property="FontSize" Value="17" />
+                <Style.Triggers>
+                    <Trigger Property="IsEnabled" Value="False">
+                        <Setter Property="Opacity" Value="0.45" />
+                    </Trigger>
+                </Style.Triggers>
             </Style>
 
             <!-- Bouton danger rouge -->
