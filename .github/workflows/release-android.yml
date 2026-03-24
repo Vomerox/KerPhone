@@ -1,0 +1,67 @@
+name: Build & Release APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'microsoft'
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install MAUI Android workload
+        run: dotnet workload install maui-android
+
+      - name: Restore dependencies
+        run: dotnet restore src/KerPhoneAndroid/KerPhoneAndroid.csproj
+
+      - name: Build APK
+        run: |
+          dotnet publish src/KerPhoneAndroid/KerPhoneAndroid.csproj \
+            -f net8.0-android \
+            -c Release \
+            --no-restore
+
+      - name: Locate APK
+        id: apk
+        run: |
+          APK_PATH=$(find . -name "*-Signed.apk" -not -path "*/obj/*" | head -1)
+          if [ -z "$APK_PATH" ]; then
+            APK_PATH=$(find . -name "*.apk" -not -path "*/obj/*" | head -1)
+          fi
+          echo "path=$APK_PATH" >> $GITHUB_OUTPUT
+          echo "APK trouvé : $APK_PATH"
+
+      - name: Rename APK
+        run: cp "${{ steps.apk.outputs.path }}" KerPhone-${{ github.ref_name }}.apk
+
+      - name: Créer la release GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          name: KerPhone ${{ github.ref_name }}
+          files: KerPhone-${{ github.ref_name }}.apk
+          body: |
+            ## KerPhone ${{ github.ref_name }}
+
+            Télécharger **KerPhone-${{ github.ref_name }}.apk** ci-dessous et l'installer sur Android (API 33 minimum).
+
+            *Développé par l'association KerBzh - Chef de projet Pierre LEGENDRE*
