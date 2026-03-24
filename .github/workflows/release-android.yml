@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - 'v*'
+    branches:
+      - 'release/**'
   workflow_dispatch:
 
 permissions:
@@ -16,6 +18,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: version
+        run: |
+          REF="${{ github.ref_name }}"
+          # release/v1.3.1 → v1.3.1 ; v1.3.1 → v1.3.1
+          VERSION="${REF#release/}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version : $VERSION"
 
       - name: Setup JDK 17
         uses: actions/setup-java@v4
@@ -52,16 +63,17 @@ jobs:
           echo "APK trouvé : $APK_PATH"
 
       - name: Rename APK
-        run: cp "${{ steps.apk.outputs.path }}" KerPhone-${{ github.ref_name }}.apk
+        run: cp "${{ steps.apk.outputs.path }}" KerPhone-${{ steps.version.outputs.version }}.apk
 
       - name: Créer la release GitHub
         uses: softprops/action-gh-release@v2
         with:
-          name: KerPhone ${{ github.ref_name }}
-          files: KerPhone-${{ github.ref_name }}.apk
+          tag_name: ${{ steps.version.outputs.version }}
+          name: KerPhone ${{ steps.version.outputs.version }}
+          files: KerPhone-${{ steps.version.outputs.version }}.apk
           body: |
-            ## KerPhone ${{ github.ref_name }}
+            ## KerPhone ${{ steps.version.outputs.version }}
 
-            Télécharger **KerPhone-${{ github.ref_name }}.apk** ci-dessous et l'installer sur Android (API 33 minimum).
+            Télécharger **KerPhone-${{ steps.version.outputs.version }}.apk** ci-dessous et l'installer sur Android (API 33 minimum).
 
             *Développé par l'association KerBzh - Chef de projet Pierre LEGENDRE*
