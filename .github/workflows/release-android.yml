@@ -38,34 +38,22 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Show .NET SDK version
-        run: dotnet --version && dotnet --list-sdks
-
-      - name: Install Android + MAUI workloads
-        run: dotnet workload install android maui-android
-
-      - name: Show installed workloads
-        run: dotnet workload list
-
-      - name: Restore NuGet dependencies
-        run: |
-          dotnet restore src/KerPhoneAndroid/KerPhoneAndroid.csproj \
-            --verbosity normal \
-            2>&1 | tee /tmp/restore.log
-          EXIT=${PIPESTATUS[0]}
-          echo "## dotnet restore" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          cat /tmp/restore.log >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          exit $EXIT
+      - name: Install MAUI workload
+        run: dotnet workload install maui --ignore-failed-sources
 
       - name: Build APK
         run: |
           dotnet publish src/KerPhoneAndroid/KerPhoneAndroid.csproj \
             -f net8.0-android \
             -c Release \
-            --no-restore \
-            --verbosity normal
+            --verbosity normal \
+            2>&1 | tee /tmp/build.log
+          EXIT=${PIPESTATUS[0]}
+          echo "## Build output" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          grep -E "error|warning|Error|Warning|FAILED" /tmp/build.log | head -50 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          exit $EXIT
 
       - name: Locate APK
         id: apk
