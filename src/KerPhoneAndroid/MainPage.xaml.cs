@@ -93,6 +93,28 @@ public partial class MainPage : ContentPage
         {
             await Permissions.RequestAsync<Permissions.NetworkState>();
         }
+
+        // Permission Bluetooth pour Android 12+ (routage audio casque/oreillette)
+#if ANDROID
+        if (OperatingSystem.IsAndroidVersionAtLeast(31))
+        {
+            var btStatus = await Permissions.CheckStatusAsync<Permissions.Bluetooth>();
+            if (btStatus != PermissionStatus.Granted)
+            {
+                await Permissions.RequestAsync<Permissions.Bluetooth>();
+            }
+        }
+#endif
+
+        // Configurer les boutons volume physiques pour controler le volume d'appel
+#if ANDROID
+        try
+        {
+            var activity = Platform.CurrentActivity;
+            if (activity != null) activity.VolumeControlStream = Android.Media.Stream.VoiceCall;
+        }
+        catch { }
+#endif
     }
 }
 

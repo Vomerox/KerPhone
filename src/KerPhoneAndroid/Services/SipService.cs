@@ -305,8 +305,24 @@ public sealed class SipService
             StopAudioPlayback();
             RequestAudioFocus();
 
+            // Forcer le routage audio vers l'ecouteur du telephone
+            var mgr = GetAudioManager();
+            if (mgr != null)
+            {
+                mgr.Mode = Mode.InCommunication;
+                mgr.SpeakerphoneOn = _isSpeakerOn;
+            }
+
             // S'assurer que le volume d'appel est audible
             EnsureCallVolume();
+
+            // Configurer le flux volume de l'Activity Android
+            try
+            {
+                var activity = Platform.CurrentActivity;
+                if (activity != null) activity.VolumeControlStream = Android.Media.Stream.VoiceCall;
+            }
+            catch { }
 
             int sampleRate = 8000;
             var channelConfig = ChannelOut.Mono;
@@ -338,7 +354,7 @@ public sealed class SipService
             _audioTrack.Play();
 
             // Ecrire du silence pour amorcer le buffer AudioTrack
-            var silence = new byte[320]; // 20ms de silence PCM16
+            var silence = new byte[640]; // 40ms de silence PCM16 pour bien amorcer
             _audioTrack.Write(silence, 0, silence.Length);
         }
         catch (Exception ex)
@@ -404,6 +420,7 @@ public sealed class SipService
             int bufferSize = AudioRecord.GetMinBufferSize(sampleRate, channelConfig, encoding);
             if (bufferSize < 4096) bufferSize = 4096;
 
+            // Essayer VoiceCommunication d'abord (echo cancellation), puis Mic en fallback
             _audioRecord = new AudioRecord(
                 AudioSource.VoiceCommunication,
                 sampleRate,
@@ -413,8 +430,23 @@ public sealed class SipService
 
             if (_audioRecord.State != State.Initialized)
             {
-                _audioRecord.Release();
+                // VoiceCommunication echoue sur certains appareils → fallback Mic
+                try { _audioRecord.Release(); } catch { }
+                _audioRecord = new AudioRecord(
+                    AudioSource.Mic,
+                    sampleRate,
+                    channelConfig,
+                    encoding,
+                    bufferSize);
+            }
+
+            if (_audioRecord.State != State.Initialized)
+            {
+                // Aucune source audio disponible
+                try { _audioRecord.Release(); } catch { }
                 _audioRecord = null;
+                MainThread.BeginInvokeOnMainThread(() =>
+                    ErrorOccurred?.Invoke("Micro inaccessible. Vérifiez les permissions."));
                 return;
             }
 
@@ -680,6 +712,14 @@ public sealed class SipService
             mgr.Mode = Mode.Normal;
             mgr.SpeakerphoneOn = false;
             _isSpeakerOn = false;
+
+            // Remettre le flux volume par defaut (media)
+            try
+            {
+                var activity = Platform.CurrentActivity;
+                if (activity != null) activity.VolumeControlStream = Android.Media.Stream.Music;
+            }
+            catch { }
         }
         catch { }
     }
