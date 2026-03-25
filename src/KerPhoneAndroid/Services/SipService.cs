@@ -67,6 +67,11 @@ public sealed class SipService
             Cleanup();
 
             _sipTransport = new SIPTransport();
+
+            // Creer un canal UDP explicite pour recevoir les requetes entrantes (INVITE, OPTIONS, etc.)
+            var sipChannel = new SIPSorcery.SIP.SIPUDPChannel(IPAddress.Any, 0);
+            _sipTransport.AddSIPChannel(sipChannel);
+
             _sipTransport.SIPTransportRequestReceived += OnSIPRequestReceived;
 
             _regAgent = new SIPRegistrationUserAgent(
@@ -763,6 +768,15 @@ public sealed class SipService
         {
             if (_userAgent != null && _pendingUas != null && _rtpSession != null)
             {
+                // Configurer le mode audio Android AVANT de demarrer le playback
+                try
+                {
+                    var mgr = GetAudioManager();
+                    if (mgr != null)
+                        mgr.Mode = Mode.InCommunication;
+                }
+                catch { }
+
                 StartAudioPlayback();
                 StartSilenceTimer();
 
@@ -772,12 +786,14 @@ public sealed class SipService
 
                 if (answered)
                 {
+                    _isCallSetup = true;
                     StartMicCapture();
                     MainThread.BeginInvokeOnMainThread(() =>
                         CallStateChanged?.Invoke("En ligne"));
                 }
                 else
                 {
+                    _isCallSetup = false;
                     StopAudio();
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
@@ -789,6 +805,7 @@ public sealed class SipService
         }
         catch (Exception ex)
         {
+            _isCallSetup = false;
             StopAudio();
             MainThread.BeginInvokeOnMainThread(() =>
                 ErrorOccurred?.Invoke($"Erreur réponse : {ex.Message}"));
@@ -806,40 +823,95 @@ public sealed class SipService
 
     private async Task OnSIPRequestReceived(SIPEndPoint localSIPEndPoint, SIPEndPoint remoteEndPoint, SIPRequest sipRequest)
     {
-        if (sipRequest.Method == SIPMethodsEnum.INVITE)
+        try
         {
-            var from = sipRequest.Header.From?.FromURI?.User ?? "Inconnu";
-
-            CleanupCall();
-
-            _userAgent = new SIPUserAgent(_sipTransport, null);
-            _isCallSetup = true;
-
-            _userAgent.OnCallHungup += (dialogue) =>
+            switch (sipRequest.Method)
             {
-                _isCallSetup = false;
-                StopAudio();
-                MainThread.BeginInvokeOnMainThread(() =>
-                    CallStateChanged?.Invoke("Raccroché"));
-            };
+                case SIPMethodsEnum.INVITE:
+                {
+                    var from = sipRequest.Header.From?.FromURI?.User ?? "Inconnu";
 
-            _rtpSession = new RTPSession(false, false, false);
-            var pcmuFormat = new SDPAudioVideoMediaFormat(SDPWellKnownMediaFormatsEnum.PCMU);
-            var pcmaFormat = new SDPAudioVideoMediaFormat(SDPWellKnownMediaFormatsEnum.PCMA);
-            var audioTrack = new MediaStreamTrack(
-                SDPMediaTypesEnum.audio,
-                false,
-                new List<SDPAudioVideoMediaFormat> { pcmuFormat, pcmaFormat },
-                MediaStreamStatusEnum.SendRecv);
-            _rtpSession.addTrack(audioTrack);
-            _rtpSession.AcceptRtpFromAny = true;
-            _rtpSession.OnRtpPacketReceived += OnRtpPacketReceived;
-            _rtpSession.OnTimeout += (mediaType) => { };
+                    CleanupCall();
 
-            _pendingUas = _userAgent.AcceptCall(sipRequest);
+                    _userAgent = new SIPUserAgent(_sipTransport, null);
+                    _isCallSetup = true;
 
-            MainThread.BeginInvokeOnMainThread(() =>
-                IncomingCall?.Invoke(from));
+                    _userAgent.OnCallHungup += (dialogue) =>
+                    {
+                        _isCallSetup = false;
+                        StopAudio();
+                        MainThread.BeginInvokeOnMainThread(() =>
+                            CallStateChanged?.Invoke("Raccroché"));
+                    };
+
+                    _rtpSession = new RTPSession(false, false, false);
+                    var pcmuFormat = new SDPAudioVideoMediaFormat(SDPWellKnownMediaFormatsEnum.PCMU);
+                    var pcmaFormat = new SDPAudioVideoMediaFormat(SDPWellKnownMediaFormatsEnum.PCMA);
+                    var audioTrack = new MediaStreamTrack(
+                        SDPMediaTypesEnum.audio,
+                        false,
+                        new List<SDPAudioVideoMediaFormat> { pcmuFormat, pcmaFormat },
+                        MediaStreamStatusEnum.SendRecv);
+                    _rtpSession.addTrack(audioTrack);
+                    _rtpSession.AcceptRtpFromAny = true;
+                    _rtpSession.OnRtpPacketReceived += OnRtpPacketReceived;
+                    _rtpSession.OnTimeout += (mediaType) => { };
+
+                    _pendingUas = _userAgent.AcceptCall(sipRequest);
+
+                    MainThread.BeginInvokeOnMainThread(() =>
+                        IncomingCall?.Invoke(from));
+                    break;
+                }
+
+                case SIPMethodsEnum.OPTIONS:
+                {
+                    // Repondre 200 OK aux pings OPTIONS du serveur (keepalive)
+                    // Sans cette reponse, le serveur considere le client hors ligne
+                    var optionsResp = SIPResponse.GetResponse(sipRequest, SIPResponseStatusCodesEnum.Ok, null);
+                    await _sipTransport!.SendResponseAsync(optionsResp);
+                    break;
+                }
+
+                case SIPMethodsEnum.BYE:
+                {
+                    // Le correspondant raccroche — repondre 200 OK
+                    var byeResp = SIPResponse.GetResponse(sipRequest, SIPResponseStatusCodesEnum.Ok, null);
+                    await _sipTransport!.SendResponseAsync(byeResp);
+                    _isCallSetup = false;
+                    StopAudio();
+                    MainThread.BeginInvokeOnMainThread(() =>
+                        CallStateChanged?.Invoke("Raccroché"));
+                    break;
+                }
+
+                case SIPMethodsEnum.CANCEL:
+                {
+                    // L'appelant annule avant reponse
+                    var cancelResp = SIPResponse.GetResponse(sipRequest, SIPResponseStatusCodesEnum.Ok, null);
+                    await _sipTransport!.SendResponseAsync(cancelResp);
+                    _isCallSetup = false;
+                    StopAudio();
+                    MainThread.BeginInvokeOnMainThread(() =>
+                    {
+                        CallStateChanged?.Invoke("Raccroché");
+                        IncomingCall?.Invoke(""); // Fermer le panneau d'appel entrant
+                    });
+                    break;
+                }
+
+                default:
+                {
+                    // Repondre 405 Method Not Allowed pour les methodes non gerees
+                    var resp = SIPResponse.GetResponse(sipRequest, SIPResponseStatusCodesEnum.MethodNotAllowed, null);
+                    await _sipTransport!.SendResponseAsync(resp);
+                    break;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"SIP request error: {ex.Message}");
         }
     }
 

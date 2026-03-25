@@ -390,6 +390,16 @@ public partial class MainViewModel : ObservableObject
 
     private void OnIncomingCall(string from)
     {
+        // Chaine vide = appel annule par le correspondant (CANCEL)
+        if (string.IsNullOrEmpty(from))
+        {
+            _sip.StopIncomingRingtone();
+            _callTimer?.Stop();
+            ResetCallState();
+            StatusMessage = "Appel annulé par le correspondant";
+            return;
+        }
+
         RemoteParty = from;
         IncomingCallerInfo = from;
         IsIncomingCall = true;
