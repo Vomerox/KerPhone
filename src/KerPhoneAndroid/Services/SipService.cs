@@ -33,12 +33,11 @@ public sealed class SipService
     private int _port = 5060;
 
     // Audio Android
-    private AudioTrack? _audioTrack;
-    private AudioRecord? _audioRecord;
-    private bool _isRecording;
+    private volatile AudioTrack? _audioTrack;
+    private volatile AudioRecord? _audioRecord;
+    private volatile bool _isRecording;
     private Thread? _recordThread;
-    private readonly byte[] _rtpPcmBuffer = new byte[1280]; // 640 samples PCM16 max (20ms @ 8kHz * 2 bytes)
-    private bool _isSpeakerOn;
+    private volatile bool _isSpeakerOn;
     private AudioManager? _audioManager;
     private AudioFocusRequestClass? _audioFocusRequest;
 
@@ -305,7 +304,15 @@ public sealed class SipService
             StopAudioPlayback();
             RequestAudioFocus();
 
-            // Forcer le routage audio vers l'ecouteur du telephone
+            // Configurer le flux volume de l'Activity Android
+            try
+            {
+                var activity = Platform.CurrentActivity;
+                if (activity != null) activity.VolumeControlStream = Android.Media.Stream.VoiceCall;
+            }
+            catch { }
+
+            // Forcer le routage audio AVANT de creer l'AudioTrack
             var mgr = GetAudioManager();
             if (mgr != null)
             {
@@ -316,51 +323,76 @@ public sealed class SipService
             // S'assurer que le volume d'appel est audible
             EnsureCallVolume();
 
-            // Configurer le flux volume de l'Activity Android
-            try
-            {
-                var activity = Platform.CurrentActivity;
-                if (activity != null) activity.VolumeControlStream = Android.Media.Stream.VoiceCall;
-            }
-            catch { }
-
             int sampleRate = 8000;
             var channelConfig = ChannelOut.Mono;
             var encoding = Encoding.Pcm16bit;
-            int bufferSize = AudioTrack.GetMinBufferSize(sampleRate, channelConfig, encoding);
-            if (bufferSize < 4096) bufferSize = 4096;
+            int minBufSize = AudioTrack.GetMinBufferSize(sampleRate, channelConfig, encoding);
+            // Buffer 4x le minimum pour eviter les underruns audio
+            int bufferSize = Math.Max(minBufSize * 4, 8192);
 
-            _audioTrack = new AudioTrack.Builder()
-                .SetAudioAttributes(new AudioAttributes.Builder()
-                    .SetUsage(AudioUsageKind.VoiceCommunication)!
-                    .SetContentType(AudioContentType.Speech)!
-                    .Build()!)
-                .SetAudioFormat(new Android.Media.AudioFormat.Builder()
-                    .SetSampleRate(sampleRate)!
-                    .SetChannelMask(channelConfig)!
-                    .SetEncoding(encoding)!
-                    .Build()!)
-                .SetBufferSizeInBytes(bufferSize)
-                .SetTransferMode(AudioTrackMode.Stream)
-                .Build();
-
-            if (_audioTrack == null)
+            // Methode 1: AudioTrack.Builder (Android 6+)
+            AudioTrack? track = null;
+            try
             {
+                track = new AudioTrack.Builder()
+                    .SetAudioAttributes(new AudioAttributes.Builder()
+                        .SetUsage(AudioUsageKind.VoiceCommunication)!
+                        .SetContentType(AudioContentType.Speech)!
+                        .SetLegacyStreamType(Android.Media.Stream.VoiceCall)!
+                        .Build()!)
+                    .SetAudioFormat(new Android.Media.AudioFormat.Builder()
+                        .SetSampleRate(sampleRate)!
+                        .SetChannelMask(channelConfig)!
+                        .SetEncoding(encoding)!
+                        .Build()!)
+                    .SetBufferSizeInBytes(bufferSize)
+                    .SetTransferMode(AudioTrackMode.Stream)
+                    .Build();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"AudioTrack.Builder failed: {ex.Message}");
+                track = null;
+            }
+
+            // Methode 2: Constructeur legacy si Builder echoue
+            if (track == null || track.State != AudioTrackState.Initialized)
+            {
+                try { track?.Release(); } catch { }
+                System.Diagnostics.Debug.WriteLine("Fallback to legacy AudioTrack constructor");
+                #pragma warning disable CA1422
+                track = new AudioTrack(
+                    Android.Media.Stream.VoiceCall,
+                    sampleRate,
+                    channelConfig,
+                    encoding,
+                    bufferSize,
+                    AudioTrackMode.Stream);
+                #pragma warning restore CA1422
+            }
+
+            if (track == null || track.State != AudioTrackState.Initialized)
+            {
+                try { track?.Release(); } catch { }
                 MainThread.BeginInvokeOnMainThread(() =>
-                    ErrorOccurred?.Invoke("Impossible de créer le canal audio."));
+                    ErrorOccurred?.Invoke("Impossible de créer le canal audio. Vérifiez le volume."));
                 return;
             }
 
+            _audioTrack = track;
             _audioTrack.Play();
 
+            System.Diagnostics.Debug.WriteLine($"AudioTrack started: state={_audioTrack.State}, playState={_audioTrack.PlayState}, sampleRate={_audioTrack.SampleRate}");
+
             // Ecrire du silence pour amorcer le buffer AudioTrack
-            var silence = new byte[640]; // 40ms de silence PCM16 pour bien amorcer
+            var silence = new byte[960]; // 60ms de silence PCM16
             _audioTrack.Write(silence, 0, silence.Length);
         }
         catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"StartAudioPlayback error: {ex}");
             MainThread.BeginInvokeOnMainThread(() =>
-                ErrorOccurred?.Invoke($"Erreur audio speaker : {ex.Message}"));
+                ErrorOccurred?.Invoke($"Erreur audio : {ex.Message}"));
         }
     }
 
@@ -374,17 +406,31 @@ public sealed class SipService
             var mgr = GetAudioManager();
             if (mgr == null) return;
 
+            // S'assurer que le volume d'appel vocal est audible
             int maxVol = mgr.GetStreamMaxVolume(Android.Media.Stream.VoiceCall);
             int curVol = mgr.GetStreamVolume(Android.Media.Stream.VoiceCall);
 
-            // Si le volume est inferieur a 40%, le monter a 70%
-            if (curVol < maxVol * 0.4)
+            System.Diagnostics.Debug.WriteLine($"Call volume: {curVol}/{maxVol}, mode={mgr.Mode}, speaker={mgr.SpeakerphoneOn}");
+
+            // Si le volume est a 0 ou tres bas, le monter a 80%
+            if (curVol < maxVol * 0.2)
             {
-                int targetVol = (int)(maxVol * 0.7);
-                mgr.SetStreamVolume(Android.Media.Stream.VoiceCall, targetVol, 0);
+                int targetVol = (int)(maxVol * 0.8);
+                mgr.SetStreamVolume(Android.Media.Stream.VoiceCall, targetVol, VolumeNotificationFlags.ShowUi);
+            }
+
+            // Verifier aussi le volume de communication (certains appareils utilisent ce flux)
+            int maxComm = mgr.GetStreamMaxVolume(Android.Media.Stream.Music);
+            int curComm = mgr.GetStreamVolume(Android.Media.Stream.Music);
+            if (curComm == 0)
+            {
+                mgr.SetStreamVolume(Android.Media.Stream.Music, (int)(maxComm * 0.5), 0);
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"EnsureCallVolume error: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -451,11 +497,30 @@ public sealed class SipService
             }
 
             _audioRecord.StartRecording();
+
+            if (_audioRecord.RecordingState != RecordState.Recording)
+            {
+                MainThread.BeginInvokeOnMainThread(() =>
+                    ErrorOccurred?.Invoke("Le microphone n'a pas démarré. Vérifiez les permissions."));
+                try { _audioRecord.Release(); } catch { }
+                _audioRecord = null;
+                return;
+            }
+
             _isRecording = true;
+
+            System.Diagnostics.Debug.WriteLine($"AudioRecord started: state={_audioRecord.State}, recording={_audioRecord.RecordingState}, source={_audioRecord.AudioSource}");
 
             // Thread de capture: lit 160 samples (20ms) et envoie en PCMU
             _recordThread = new Thread(() =>
             {
+                try
+                {
+                    // Priorite temps reel pour le thread audio
+                    Android.OS.Process.SetThreadPriority(Android.OS.ThreadPriority.UrgentAudio);
+                }
+                catch { }
+
                 var pcmBuffer = new short[160]; // 20ms a 8kHz
                 var mulawBuffer = new byte[160];
 
@@ -463,23 +528,33 @@ public sealed class SipService
                 {
                     try
                     {
-                        if (_audioRecord == null || _audioRecord.RecordingState != RecordState.Recording)
+                        var recorder = _audioRecord;
+                        if (recorder == null || recorder.RecordingState != RecordState.Recording)
                             break;
 
-                        int read = _audioRecord.Read(pcmBuffer, 0, pcmBuffer.Length);
-                        if (read > 0 && !_isMuted && !_isOnHold && _rtpSession != null && !_rtpSession.IsClosed)
+                        int read = recorder.Read(pcmBuffer, 0, pcmBuffer.Length);
+                        if (read > 0 && !_isMuted && !_isOnHold)
                         {
-                            // Encoder PCM16 -> mu-law
-                            for (int i = 0; i < read; i++)
-                                mulawBuffer[i] = LinearToMuLaw(pcmBuffer[i]);
+                            var rtp = _rtpSession;
+                            if (rtp != null && !rtp.IsClosed)
+                            {
+                                // Encoder PCM16 -> mu-law
+                                for (int i = 0; i < read; i++)
+                                    mulawBuffer[i] = LinearToMuLaw(pcmBuffer[i]);
 
-                            _rtpSession.SendAudio((uint)read, mulawBuffer);
+                                rtp.SendAudio((uint)read, mulawBuffer);
+                            }
                         }
                     }
-                    catch { break; }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Mic capture error: {ex.Message}");
+                        break;
+                    }
                 }
             });
             _recordThread.IsBackground = true;
+            _recordThread.Priority = System.Threading.ThreadPriority.Highest;
             _recordThread.Start();
         }
         catch (Exception ex)
@@ -537,16 +612,20 @@ public sealed class SipService
             if (payloadType != 0 && payloadType != 8)
                 return;
 
-            int count = Math.Min(payload.Length, _rtpPcmBuffer.Length / 2);
+            int count = payload.Length;
 
-            // Decoder mu-law (PT 0) ou a-law (PT 8) -> PCM16 dans le buffer reutilise
+            // Buffer LOCAL pour eviter la corruption inter-threads
+            // (les paquets RTP arrivent sur des threads differents)
+            var pcmBytes = new byte[count * 2];
+
+            // Decoder mu-law (PT 0) ou a-law (PT 8) -> PCM16
             for (int i = 0; i < count; i++)
             {
                 short sample = payloadType == 8
                     ? ALawToLinear(payload[i])
                     : MuLawToLinear(payload[i]);
-                _rtpPcmBuffer[i * 2]     = (byte)(sample & 0xFF);
-                _rtpPcmBuffer[i * 2 + 1] = (byte)((sample >> 8) & 0xFF);
+                pcmBytes[i * 2]     = (byte)(sample & 0xFF);
+                pcmBytes[i * 2 + 1] = (byte)((sample >> 8) & 0xFF);
             }
 
             // Relancer l'AudioTrack s'il a ete stoppe inopinement
@@ -556,9 +635,14 @@ public sealed class SipService
             }
 
             if (track.PlayState == PlayState.Playing)
-                track.Write(_rtpPcmBuffer, 0, count * 2);
+            {
+                track.Write(pcmBytes, 0, pcmBytes.Length);
+            }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"RTP receive error: {ex.Message}");
+        }
     }
 
     /// <summary>
