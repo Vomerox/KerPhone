@@ -300,6 +300,9 @@ public sealed class SipService
             StopAudioPlayback();
             RequestAudioFocus();
 
+            // S'assurer que le volume d'appel est audible
+            EnsureCallVolume();
+
             int sampleRate = 8000;
             var channelConfig = ChannelOut.Mono;
             var encoding = Encoding.Pcm16bit;
@@ -320,13 +323,47 @@ public sealed class SipService
                 .SetTransferMode(AudioTrackMode.Stream)
                 .Build();
 
+            if (_audioTrack == null)
+            {
+                MainThread.BeginInvokeOnMainThread(() =>
+                    ErrorOccurred?.Invoke("Impossible de créer le canal audio."));
+                return;
+            }
+
             _audioTrack.Play();
+
+            // Ecrire du silence pour amorcer le buffer AudioTrack
+            var silence = new byte[320]; // 20ms de silence PCM16
+            _audioTrack.Write(silence, 0, silence.Length);
         }
         catch (Exception ex)
         {
             MainThread.BeginInvokeOnMainThread(() =>
                 ErrorOccurred?.Invoke($"Erreur audio speaker : {ex.Message}"));
         }
+    }
+
+    /// <summary>
+    /// S'assure que le volume d'appel vocal est a un niveau audible.
+    /// </summary>
+    private void EnsureCallVolume()
+    {
+        try
+        {
+            var mgr = GetAudioManager();
+            if (mgr == null) return;
+
+            int maxVol = mgr.GetStreamMaxVolume(Android.Media.Stream.VoiceCall);
+            int curVol = mgr.GetStreamVolume(Android.Media.Stream.VoiceCall);
+
+            // Si le volume est inferieur a 40%, le monter a 70%
+            if (curVol < maxVol * 0.4)
+            {
+                int targetVol = (int)(maxVol * 0.7);
+                mgr.SetStreamVolume(Android.Media.Stream.VoiceCall, targetVol, 0);
+            }
+        }
+        catch { }
     }
 
     /// <summary>
@@ -444,13 +481,25 @@ public sealed class SipService
     private void OnRtpPacketReceived(IPEndPoint remoteEndPoint, SDPMediaTypesEnum mediaType,
         RTPPacket rtpPacket)
     {
-        if (mediaType != SDPMediaTypesEnum.audio || _audioTrack == null || _isOnHold)
+        if (mediaType != SDPMediaTypesEnum.audio || _isOnHold)
+            return;
+
+        var track = _audioTrack;
+        if (track == null)
             return;
 
         try
         {
             var payload = rtpPacket.Payload;
+            if (payload == null || payload.Length == 0)
+                return;
+
             int payloadType = rtpPacket.Header.PayloadType;
+
+            // Ignorer les types non-audio (DTMF event PT 101, etc.)
+            if (payloadType != 0 && payloadType != 8)
+                return;
+
             int count = Math.Min(payload.Length, _rtpPcmBuffer.Length / 2);
 
             // Decoder mu-law (PT 0) ou a-law (PT 8) -> PCM16 dans le buffer reutilise
@@ -463,8 +512,14 @@ public sealed class SipService
                 _rtpPcmBuffer[i * 2 + 1] = (byte)((sample >> 8) & 0xFF);
             }
 
-            if (_audioTrack?.PlayState == PlayState.Playing)
-                _audioTrack.Write(_rtpPcmBuffer, 0, count * 2);
+            // Relancer l'AudioTrack s'il a ete stoppe inopinement
+            if (track.PlayState == PlayState.Stopped)
+            {
+                try { track.Play(); } catch { return; }
+            }
+
+            if (track.PlayState == PlayState.Playing)
+                track.Write(_rtpPcmBuffer, 0, count * 2);
         }
         catch { }
     }
@@ -565,8 +620,9 @@ public sealed class SipService
             var mgr = GetAudioManager();
             if (mgr != null)
             {
+                // Toujours garder InCommunication pendant un appel VoIP
+                mgr.Mode = Mode.InCommunication;
                 mgr.SpeakerphoneOn = on;
-                mgr.Mode = on ? Mode.Normal : Mode.InCommunication;
             }
         }
         catch { }
