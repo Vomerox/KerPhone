@@ -150,8 +150,7 @@ public class PressAnimationBehavior : Behavior<Border>
     private async void OnTapped(object? sender, TappedEventArgs e)
     {
         if (_border == null) return;
-        // D. Haptic feedback
-        HapticFeedback.Default.Perform(HapticFeedbackType.Click);
+        try { HapticFeedback.Default.Perform(HapticFeedbackType.Click); } catch { }
         await _border.ScaleTo(0.88, 60, Easing.CubicOut);
         await _border.ScaleTo(1.0, 120, Easing.SpringOut);
     }
@@ -195,6 +194,7 @@ public class SpeakerTextConverter : IValueConverter
 
 /// <summary>
 /// Behavior pour detecter un appui long sur le 0 (inserer "+").
+/// Utilise un TapGestureRecognizer interne avec un timer pour compatibilite Android touch.
 /// </summary>
 public class LongPressBehavior : Behavior<Border>
 {
@@ -208,39 +208,77 @@ public class LongPressBehavior : Behavior<Border>
     }
 
     private Border? _border;
-    private CancellationTokenSource? _cts;
+    private bool _longPressTriggered;
+    private DateTime _touchStart;
 
     protected override void OnAttachedTo(Border bindable)
     {
         base.OnAttachedTo(bindable);
         _border = bindable;
 
-        var pointerGesture = new PointerGestureRecognizer();
-        pointerGesture.PointerPressed += OnPointerPressed;
-        pointerGesture.PointerReleased += OnPointerReleased;
-        bindable.GestureRecognizers.Add(pointerGesture);
+#if ANDROID
+        bindable.HandlerChanged += OnHandlerChanged;
+#endif
     }
 
-    private async void OnPointerPressed(object? sender, PointerEventArgs e)
+    protected override void OnDetachingFrom(Border bindable)
     {
-        _cts?.Cancel();
-        _cts = new CancellationTokenSource();
-        var token = _cts.Token;
-
-        try
+        base.OnDetachingFrom(bindable);
+#if ANDROID
+        bindable.HandlerChanged -= OnHandlerChanged;
+        if (bindable.Handler?.PlatformView is Android.Views.View nativeView)
         {
-            await Task.Delay(600, token);
-            if (!token.IsCancellationRequested)
-            {
-                HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
-                Command?.Execute(null);
-            }
+            nativeView.Touch -= OnNativeTouch;
         }
-        catch (TaskCanceledException) { }
+#endif
+        _border = null;
     }
 
-    private void OnPointerReleased(object? sender, PointerEventArgs e)
+#if ANDROID
+    private void OnHandlerChanged(object? sender, EventArgs e)
     {
-        _cts?.Cancel();
+        if (_border?.Handler?.PlatformView is Android.Views.View nativeView)
+        {
+            nativeView.Touch += OnNativeTouch;
+        }
     }
+
+    private CancellationTokenSource? _cts;
+
+    private async void OnNativeTouch(object? sender, Android.Views.View.TouchEventArgs e)
+    {
+        switch (e.Event?.Action)
+        {
+            case Android.Views.MotionEventActions.Down:
+                _longPressTriggered = false;
+                _touchStart = DateTime.Now;
+                _cts?.Cancel();
+                _cts = new CancellationTokenSource();
+                var token = _cts.Token;
+                try
+                {
+                    await Task.Delay(600, token);
+                    if (!token.IsCancellationRequested)
+                    {
+                        _longPressTriggered = true;
+                        try { HapticFeedback.Default.Perform(HapticFeedbackType.LongPress); } catch { }
+                        MainThread.BeginInvokeOnMainThread(() => Command?.Execute(null));
+                    }
+                }
+                catch (TaskCanceledException) { }
+                e.Handled = false;
+                break;
+
+            case Android.Views.MotionEventActions.Up:
+            case Android.Views.MotionEventActions.Cancel:
+                _cts?.Cancel();
+                e.Handled = _longPressTriggered;
+                break;
+
+            default:
+                e.Handled = false;
+                break;
+        }
+    }
+#endif
 }
